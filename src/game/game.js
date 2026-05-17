@@ -196,7 +196,7 @@ export class Game {
   spawnEnemy(dt) {
     if (this.isLevelBossActive) return;
 
-    const totalEnemies = 50 + ((this.wave - 1) * 5);
+    const totalEnemies = 50 + Math.floor((this.wave - 1) / 2) * 5;
     const bossThreshold = Math.max(1, totalEnemies - 20); // Boss spawns for the last 20 enemies
 
     if (this.enemiesSpawnedThisWave >= totalEnemies && this.isBossSpawned) return;
@@ -260,11 +260,19 @@ export class Game {
             
             if (enemy.hp <= 0 && !enemy.isDead) {
               enemy.isDead = true;
-              if(!enemy.isBoss) {
-                this.score++;
-                this.money += 5;
+              if (enemy.isLevelBoss) {
+                this.money += 2000;
+              } else if (enemy.isBoss) {
+                if (this.wave <= 2) {
+                  this.money += 500;
+                } else if (this.wave <= 4) {
+                  this.money += 750;
+                } else {
+                  this.money += 1000;
+                }
               } else {
-                this.money += 200;
+                this.score++;
+                this.money += 100;
               }
               this.createExplosion(enemy.x, enemy.y, enemy.color, enemy.isBoss ? 100 : 15);
               this.updateHUD(); // Update immediately
@@ -319,7 +327,7 @@ export class Game {
     const bulletCount = this.wave <= 2 ? 2 : 4; // waves 1-2: 2 bullets, waves 3-4: 4 bullets
     
     // Player fire
-    if ((this.input.keys[' '] || this.input.touchTarget) && time - this.player.lastShotTime > this.player.shootCooldown) {
+    if (time - this.player.lastShotTime > this.player.shootCooldown) {
       this.player.lastShotTime = time;
       const d = this.player.damageMultiplier;
       const color = this.player.color;
