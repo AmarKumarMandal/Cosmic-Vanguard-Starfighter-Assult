@@ -1,4 +1,4 @@
-import { Player, Enemy, Projectile, Particle, Star } from './entities.js';
+import { Player, Enemy, Projectile, Particle, Star, Missile } from './entities.js';
 
 export class Game {
   constructor(canvas, shipConfig = null) {
@@ -48,6 +48,7 @@ export class Game {
     this.enemies = [];
     this.projectiles = [];
     this.particles = [];
+    this.missiles = [];
     this.stars = Array.from({length: 100}, () => new Star(this.canvas));
     
     this.level = level;
@@ -62,6 +63,8 @@ export class Game {
     this.isBossSpawned = false;
     this.isLevelBossActive = false;
     this.isPaused = false;
+    this.missileCooldown = 4000;   // ms between missile launches
+    this.lastMissileTime = 0;
     
     this.updateHUD();
   }
@@ -316,6 +319,41 @@ export class Game {
     });
   }
 
+  checkMissileCollisions() {
+    const intersect = (r1, r2) =>
+      !(r2.x > r1.x + r1.w || r2.x + r2.w < r1.x || r2.y > r1.y + r1.h || r2.y + r2.h < r1.y);
+
+    const playerRect = this.player.getHitbox();
+
+    this.missiles.forEach(missile => {
+      if (missile.markedForDeletion) return;
+
+      // Player bullet hits missile → reduce missile HP
+      this.projectiles.forEach(proj => {
+        if (proj.isEnemy || proj.markedForDeletion) return;
+        if (intersect(proj.getHitbox(), missile.getHitbox())) {
+          proj.markedForDeletion = true;
+          missile.hp -= 1;
+          this.createExplosion(proj.x, proj.y, '#ff6600', 5);
+          if (missile.hp <= 0) {
+            missile.markedForDeletion = true;
+            this.createExplosion(missile.x, missile.y, '#ff4400', 30);
+          }
+        }
+      });
+
+      // Missile hits player
+      if (!missile.markedForDeletion && intersect(missile.getHitbox(), playerRect)) {
+        missile.markedForDeletion = true;
+        this.player.hp -= missile.damage;
+        this.createExplosion(missile.x, missile.y, '#ff2200', 40);
+        this.updateHUD();
+        if (this.player.hp <= 0) this.stop();
+      }
+    });
+  }
+
+
   createExplosion(x, y, color, count) {
     for (let i = 0; i < count; i++) {
       this.particles.push(new Particle(x, y, color));
@@ -372,6 +410,11 @@ export class Game {
               true, c, 10, 'spread'
             ));
           }
+          // Homing missile on separate slow cooldown
+          if (time - this.lastMissileTime > this.missileCooldown) {
+            this.lastMissileTime = time;
+            this.missiles.push(new Missile(enemy.x, enemy.y + 160, this.player));
+          }
         } else if (enemy.isBoss) {
           if (bulletCount === 2) {
             this.projectiles.push(new Projectile(enemy.x - 30, enemy.y + 100, 0, 500, true, c, 5, 'spread'));
@@ -425,14 +468,17 @@ export class Game {
       this.enemies.forEach(e => e.update(dt));
       this.projectiles.forEach(p => p.update(dt));
       this.particles.forEach(p => p.update(dt));
+      this.missiles.forEach(m => m.update(dt));
 
       this.fireProjectiles(dt);
       this.checkCollisions();
+      this.checkMissileCollisions();
 
       // Cleanup dead entities
       this.enemies = this.enemies.filter(e => e.hp > 0 && e.y < this.canvas.height + 100);
       this.projectiles = this.projectiles.filter(p => !p.markedForDeletion && p.y > -50 && p.y < this.canvas.height + 50 && p.x > -50 && p.x < this.canvas.width + 50);
       this.particles = this.particles.filter(p => p.life > 0);
+      this.missiles = this.missiles.filter(m => !m.markedForDeletion && m.y < this.canvas.height + 100);
 
       // Draw
       this.ctx.fillStyle = '#0b0c10';
@@ -441,6 +487,7 @@ export class Game {
       this.stars.forEach(s => s.draw(this.ctx));
       this.particles.forEach(p => p.draw(this.ctx));
       this.projectiles.forEach(p => p.draw(this.ctx));
+      this.missiles.forEach(m => m.draw(this.ctx));
       this.enemies.forEach(e => e.draw(this.ctx));
       if (this.player) this.player.draw(this.ctx);
 

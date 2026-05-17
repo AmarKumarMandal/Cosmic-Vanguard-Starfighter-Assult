@@ -330,6 +330,124 @@ export class Projectile {
   }
 }
 
+export class Missile {
+  constructor(x, y, targetRef) {
+    this.x = x;
+    this.y = y;
+    this.targetRef = targetRef; // live reference to player object
+    this.width = 16;
+    this.height = 28;
+    this.speed = 320;
+    this.hp = 3;           // takes 3 player hits to destroy
+    this.maxHp = 3;
+    this.damage = 30;      // big hit if it reaches player
+    this.isEnemy = true;
+    this.isMissile = true;
+    this.markedForDeletion = false;
+    this.vx = 0;
+    this.vy = this.speed;
+    this.trail = [];
+    this.age = 0;
+  }
+
+  update(dt) {
+    this.age += dt;
+    // Trail
+    this.trail.push({ x: this.x, y: this.y, age: 0 });
+    this.trail.forEach(t => t.age += dt);
+    if (this.trail.length > 12) this.trail.shift();
+
+    // Home toward player
+    const target = this.targetRef;
+    if (target && target.hp > 0) {
+      const dx = target.x - this.x;
+      const dy = target.y - this.y;
+      const dist = Math.hypot(dx, dy);
+      if (dist > 1) {
+        const desiredVx = (dx / dist) * this.speed;
+        const desiredVy = (dy / dist) * this.speed;
+        const turnRate = 3.5;
+        this.vx += (desiredVx - this.vx) * turnRate * dt;
+        this.vy += (desiredVy - this.vy) * turnRate * dt;
+        const v = Math.hypot(this.vx, this.vy);
+        this.vx = (this.vx / v) * this.speed;
+        this.vy = (this.vy / v) * this.speed;
+      }
+    }
+
+    this.x += this.vx * dt;
+    this.y += this.vy * dt;
+  }
+
+  draw(ctx) {
+    ctx.save();
+
+    // Flame trail
+    this.trail.forEach((t, i) => {
+      const alpha = (i / this.trail.length) * 0.6;
+      const size = (i / this.trail.length) * 8;
+      ctx.beginPath();
+      ctx.arc(t.x, t.y, Math.max(0.1, size), 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(255, 100, 0, ${alpha})`;
+      ctx.fill();
+    });
+
+    ctx.translate(this.x, this.y);
+    ctx.rotate(Math.atan2(this.vy, this.vx) + Math.PI / 2);
+
+    // Engine flame flicker
+    const flicker = 6 + Math.random() * 6;
+    ctx.beginPath();
+    ctx.ellipse(0, 10 + flicker / 2, 5, Math.max(1, flicker / 2), 0, 0, Math.PI * 2);
+    ctx.fillStyle = '#ff6600';
+    ctx.globalAlpha = 0.8;
+    ctx.fill();
+    ctx.globalAlpha = 1.0;
+
+    // Body
+    ctx.shadowBlur = 18;
+    ctx.shadowColor = '#ff2200';
+    ctx.fillStyle = '#cc0000';
+    ctx.beginPath();
+    ctx.moveTo(0, -14);
+    ctx.lineTo(6, 10);
+    ctx.lineTo(0, 6);
+    ctx.lineTo(-6, 10);
+    ctx.closePath();
+    ctx.fill();
+
+    // Core highlight
+    ctx.fillStyle = '#ff6644';
+    ctx.shadowBlur = 8;
+    ctx.beginPath();
+    ctx.ellipse(0, -4, 3, 7, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // HP dots (unrotate first)
+    const angle = Math.atan2(this.vy, this.vx) + Math.PI / 2;
+    ctx.rotate(-angle);
+    for (let i = 0; i < this.maxHp; i++) {
+      ctx.beginPath();
+      ctx.arc(-8 + i * 8, -22, 3, 0, Math.PI * 2);
+      ctx.fillStyle = i < this.hp ? '#ff4400' : '#333';
+      ctx.shadowBlur = 0;
+      ctx.fill();
+    }
+
+    ctx.restore();
+  }
+
+  getHitbox() {
+    return {
+      x: this.x - this.width / 2,
+      y: this.y - this.height / 2,
+      w: this.width,
+      h: this.height
+    };
+  }
+}
+
+
 export class Particle {
   constructor(x, y, color) {
     this.x = x;
