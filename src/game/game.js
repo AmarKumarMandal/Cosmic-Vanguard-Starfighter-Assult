@@ -360,11 +360,18 @@ export class Game {
         const c = '#a020f0'; // Purple spread
 
         if (enemy.isLevelBoss) {
-          // Level Boss always fires 4 bullets in a wide spread with 10 damage each
-          this.projectiles.push(new Projectile(enemy.x - 80, enemy.y + 140, 0, 480, true, c, 10, 'spread'));
-          this.projectiles.push(new Projectile(enemy.x - 30, enemy.y + 140, 0, 500, true, c, 10, 'spread'));
-          this.projectiles.push(new Projectile(enemy.x + 30, enemy.y + 140, 0, 500, true, c, 10, 'spread'));
-          this.projectiles.push(new Projectile(enemy.x + 80, enemy.y + 140, 0, 480, true, c, 10, 'spread'));
+          // 5-bullet downward V-spread (mirrors player's upward spread pattern)
+          const angles = [-24, -12, 0, 12, 24];
+          const offsets = [-30, -15, 0, 15, 30];
+          const bossSpeed = 500;
+          for (let i = 0; i < 5; i++) {
+            const rad = (angles[i] + 90) * Math.PI / 180;
+            this.projectiles.push(new Projectile(
+              enemy.x + offsets[i], enemy.y + 140,
+              Math.cos(rad) * bossSpeed, Math.sin(rad) * bossSpeed,
+              true, c, 10, 'spread'
+            ));
+          }
         } else if (enemy.isBoss) {
           if (bulletCount === 2) {
             this.projectiles.push(new Projectile(enemy.x - 30, enemy.y + 100, 0, 500, true, c, 5, 'spread'));
