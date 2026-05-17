@@ -68,7 +68,7 @@ export default function Hangar({ globalMoney, setGlobalMoney, unlockedShips, set
   const [selectedShipId, setSelectedShipId] = useState(activeShipId);
 
   const selectedShip = SHIPS.find(s => s.id === selectedShipId) || SHIPS[0];
-  const isUnlocked = unlockedShips.includes(selectedShipId);
+  const isUnlocked = true; // All ships free for testing
 
   const handlePurchase = () => {
     if (!isUnlocked && globalMoney >= selectedShip.cost) {
@@ -104,7 +104,7 @@ export default function Hangar({ globalMoney, setGlobalMoney, unlockedShips, set
               key={ship.id}
               ship={ship}
               isActive={selectedShipId === ship.id}
-              isLocked={!unlockedShips.includes(ship.id)}
+              isLocked={false}
               onClick={() => setSelectedShipId(ship.id)}
             />
           ))}
