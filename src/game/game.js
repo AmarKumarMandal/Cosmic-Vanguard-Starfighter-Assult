@@ -327,7 +327,7 @@ export class Game {
     const bulletCount = this.wave <= 2 ? 2 : 4; // waves 1-2: 2 bullets, waves 3-4: 4 bullets
     
     // Player fire
-    if ((this.input.keys[' '] || this.input.touchTarget) && time - this.player.lastShotTime > this.player.shootCooldown) {
+    if (time - this.player.lastShotTime > this.player.shootCooldown) {
       this.player.lastShotTime = time;
       const d = this.player.damageMultiplier;
       const color = this.player.color;
