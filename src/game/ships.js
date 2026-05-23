@@ -118,41 +118,66 @@ export const SHIPS = [
       ctx.shadowBlur = 0; 
 
       if (this._img.complete && this._img.naturalWidth > 0) {
-        ctx.save();
         const flicker = 0.8 + Math.random() * 0.4;
-        const flameLength = height * 0.55 * flicker;
-        const nozzleOffset = width * 0.22;
-        const startY = height * 0.55;
-        const flameWidth = width * 0.15;
-
         const colors = getFlameColors(color || this.color);
 
-        const drawFlame = (xPosition) => {
+        // 1. Draw outer flames BEHIND the ship
+        ctx.save();
+        const flameLengthOuter = height * 0.58 * flicker;
+        const startYOuter = height * 0.40;
+        const flameWidthOuter = width * 0.15;
+        const nozzleOffset = width * 0.25; // Midpoint spread between flames
+
+        const drawOuterFlame = (xPosition, yStart) => {
           ctx.beginPath();
-          ctx.moveTo(xPosition - flameWidth/2, startY);
-          ctx.quadraticCurveTo(xPosition - flameWidth/4, startY + flameLength, xPosition, startY + flameLength * 1.2);
-          ctx.quadraticCurveTo(xPosition + flameWidth/4, startY + flameLength, xPosition + flameWidth/2, startY);
+          ctx.moveTo(xPosition - flameWidthOuter/2, yStart);
+          ctx.quadraticCurveTo(xPosition - flameWidthOuter/4, yStart + flameLengthOuter, xPosition, yStart + flameLengthOuter * 1.2);
+          ctx.quadraticCurveTo(xPosition + flameWidthOuter/4, yStart + flameLengthOuter, xPosition + flameWidthOuter/2, yStart);
           ctx.closePath();
           ctx.fillStyle = colors.outer;
           ctx.shadowBlur = 20;
           ctx.shadowColor = colors.shadow;
           ctx.fill();
+        };
+        const xOffset = -width * 0.03; // Shifted both flames to the left
 
+        drawOuterFlame(-nozzleOffset + xOffset, startYOuter + height * 0.19); // Left flame
+        drawOuterFlame(nozzleOffset + xOffset, startYOuter + height * 0.19); // Right flame
+        ctx.restore();
+
+        // 2. Draw the ship image
+        ctx.drawImage(this._img, -width * 1.0, -height * 1.0, width * 2.0, height * 2.0);
+
+        // 3. Draw the inner flames/cores ON TOP of the ship (emerging through the thrusters)
+        ctx.save();
+        const flameLengthInner = height * 0.18 * flicker;
+        const startYInner = height * 0.55; // Matches the nozzle level on the sprite
+        const flameWidthInner = width * 0.08;
+
+        const drawInnerFlame = (xPosition, yStart) => {
+          // Bright inner droplet
           ctx.beginPath();
-          ctx.moveTo(xPosition - flameWidth/3, startY);
-          ctx.quadraticCurveTo(xPosition, startY + flameLength * 0.8, xPosition + flameWidth/3, startY);
+          ctx.moveTo(xPosition - flameWidthInner/2, yStart);
+          ctx.quadraticCurveTo(xPosition - flameWidthInner/4, yStart + flameLengthInner, xPosition, yStart + flameLengthInner * 1.2);
+          ctx.quadraticCurveTo(xPosition + flameWidthInner/4, yStart + flameLengthInner, xPosition + flameWidthInner/2, yStart);
           ctx.closePath();
           ctx.fillStyle = colors.inner;
           ctx.shadowBlur = 10;
           ctx.shadowColor = colors.innerShadow;
           ctx.fill();
+
+          // White-hot core
+          ctx.beginPath();
+          ctx.moveTo(xPosition - flameWidthInner/3, yStart);
+          ctx.quadraticCurveTo(xPosition, yStart + flameLengthInner * 0.6, xPosition + flameWidthInner/3, yStart);
+          ctx.closePath();
+          ctx.fillStyle = '#ffffff';
+          ctx.fill();
         };
 
-        drawFlame(-nozzleOffset);
-        drawFlame(nozzleOffset);
+        drawInnerFlame(-nozzleOffset + xOffset, startYInner + height * 0.19); // Left flame
+        drawInnerFlame(nozzleOffset + xOffset, startYInner + height * 0.19); // Right flame
         ctx.restore();
-
-        ctx.drawImage(this._img, -width * 1.0, -height * 1.0, width * 2.0, height * 2.0);
       } else {
         ctx.beginPath();
         ctx.moveTo(0, -height/2); 
@@ -334,41 +359,64 @@ export const SHIPS = [
     draw: function(ctx, width, height, color) {
       if (!this._img) { this._img = new Image(); this._img.src = '/player craftship/Spectre.png'; }
       if (this._img.complete && this._img.naturalWidth > 0) {
-        ctx.save();
         const flicker = 0.8 + Math.random() * 0.4;
-        const flameLength = height * 0.40 * flicker; // Shorter flame length to keep it at 38px visible length
-        const nozzleOffset = width * 0.14; // Aligned with the nozzle centers (closer together)
-        const startY = height * 0.60; // Moved near the nozzle exit mouth to eliminate any gap
-        const flameWidth = width * 0.096; // Flame width decreased to 8px at scale 83 (0.096 * width)
-
         const colors = getFlameColors(color || this.color);
 
-        const drawFlame = (xPosition) => {
+        // 1. Draw outer flames BEHIND the ship
+        ctx.save();
+        const flameLengthOuter = height * 0.60 * flicker;
+        const startYOuter = height * 0.35;
+        const flameWidthOuter = width * 0.14;
+
+        const drawOuterFlame = (xPosition) => {
           ctx.beginPath();
-          ctx.moveTo(xPosition - flameWidth/2, startY);
-          ctx.quadraticCurveTo(xPosition - flameWidth/4, startY + flameLength, xPosition, startY + flameLength * 1.2);
-          ctx.quadraticCurveTo(xPosition + flameWidth/4, startY + flameLength, xPosition + flameWidth/2, startY);
+          ctx.moveTo(xPosition - flameWidthOuter/2, startYOuter);
+          ctx.quadraticCurveTo(xPosition - flameWidthOuter/4, startYOuter + flameLengthOuter, xPosition, startYOuter + flameLengthOuter * 1.2);
+          ctx.quadraticCurveTo(xPosition + flameWidthOuter/4, startYOuter + flameLengthOuter, xPosition + flameWidthOuter/2, startYOuter);
           ctx.closePath();
           ctx.fillStyle = colors.outer;
           ctx.shadowBlur = 20;
           ctx.shadowColor = colors.shadow;
           ctx.fill();
+        };
 
+        drawOuterFlame(-width * 0.14);
+        drawOuterFlame(width * 0.125);
+        ctx.restore();
+
+        // 2. Draw the ship image
+        ctx.drawImage(this._img, -width * 1.0, -height * 1.0, width * 2.0, height * 2.0);
+
+        // 3. Draw the inner flames/cores ON TOP of the ship (emerging through the thrusters)
+        ctx.save();
+        const flameLengthInner = height * 0.18 * flicker;
+        const startYInner = height * 0.61; // Shifted more downward (was 0.60)
+        const flameWidthInner = width * 0.08;
+
+        const drawInnerFlame = (xPosition) => {
+          // Bright green inner droplet
           ctx.beginPath();
-          ctx.moveTo(xPosition - flameWidth/3, startY);
-          ctx.quadraticCurveTo(xPosition, startY + flameLength * 0.8, xPosition + flameWidth/3, startY);
+          ctx.moveTo(xPosition - flameWidthInner/2, startYInner);
+          ctx.quadraticCurveTo(xPosition - flameWidthInner/4, startYInner + flameLengthInner, xPosition, startYInner + flameLengthInner * 1.2);
+          ctx.quadraticCurveTo(xPosition + flameWidthInner/4, startYInner + flameLengthInner, xPosition + flameWidthInner/2, startYInner);
           ctx.closePath();
           ctx.fillStyle = colors.inner;
           ctx.shadowBlur = 10;
           ctx.shadowColor = colors.innerShadow;
           ctx.fill();
+
+          // White-hot core
+          ctx.beginPath();
+          ctx.moveTo(xPosition - flameWidthInner/3, startYInner);
+          ctx.quadraticCurveTo(xPosition, startYInner + flameLengthInner * 0.6, xPosition + flameWidthInner/3, startYInner);
+          ctx.closePath();
+          ctx.fillStyle = '#ffffff';
+          ctx.fill();
         };
 
-        drawFlame(-nozzleOffset);
-        drawFlame(nozzleOffset);
+        drawInnerFlame(-width * 0.14);
+        drawInnerFlame(width * 0.125);
         ctx.restore();
-
-        ctx.drawImage(this._img, -width * 1.0, -height * 1.0, width * 2.0, height * 2.0);
       }
     }
   },
@@ -436,41 +484,64 @@ export const SHIPS = [
     draw: function(ctx, width, height, color) {
       if (!this._img) { this._img = new Image(); this._img.src = '/player craftship/Apex.png'; }
       if (this._img.complete && this._img.naturalWidth > 0) {
-        ctx.save();
         const flicker = 0.8 + Math.random() * 0.4;
-        const flameLength = height * 0.6 * flicker;
-        const nozzleOffset = width * 0.125;
-        const startY = height * 0.45;
-        const flameWidth = width * 0.14;
-
         const colors = getFlameColors(color || this.color);
 
-        const drawFlame = (xPosition) => {
+        // 1. Draw outer flames BEHIND the ship
+        ctx.save();
+        const flameLengthOuter = height * 0.76 * flicker; // Larger in height (was 0.68)
+        const startYOuter = height * 0.35;
+        const flameWidthOuter = width * 0.14;
+
+        const drawOuterFlame = (xPosition, yStart) => {
           ctx.beginPath();
-          ctx.moveTo(xPosition - flameWidth/2, startY);
-          ctx.quadraticCurveTo(xPosition - flameWidth/4, startY + flameLength, xPosition, startY + flameLength * 1.2);
-          ctx.quadraticCurveTo(xPosition + flameWidth/4, startY + flameLength, xPosition + flameWidth/2, startY);
+          ctx.moveTo(xPosition - flameWidthOuter/2, yStart);
+          ctx.quadraticCurveTo(xPosition - flameWidthOuter/4, yStart + flameLengthOuter, xPosition, yStart + flameLengthOuter * 1.2);
+          ctx.quadraticCurveTo(xPosition + flameWidthOuter/4, yStart + flameLengthOuter, xPosition + flameWidthOuter/2, yStart);
           ctx.closePath();
           ctx.fillStyle = colors.outer;
           ctx.shadowBlur = 20;
           ctx.shadowColor = colors.shadow;
           ctx.fill();
+        };
 
+        drawOuterFlame(-width * 0.165, startYOuter - height * 0.02); // Shifted left flame upward
+        drawOuterFlame(width * 0.125, startYOuter - height * 0.02); // Shifted right flame slightly upward
+        ctx.restore();
+
+        // 2. Draw the ship image
+        ctx.drawImage(this._img, -width * 1.0, -height * 1.0, width * 2.0, height * 2.0);
+
+        // 3. Draw the inner flames/cores ON TOP of the ship (emerging through the thrusters)
+        ctx.save();
+        const flameLengthInner = height * 0.23 * flicker; // Larger in height (was 0.20)
+        const startYInner = height * 0.58;
+        const flameWidthInner = width * 0.08;
+
+        const drawInnerFlame = (xPosition, yStart) => {
+          // Bright orange inner droplet
           ctx.beginPath();
-          ctx.moveTo(xPosition - flameWidth/3, startY);
-          ctx.quadraticCurveTo(xPosition, startY + flameLength * 0.8, xPosition + flameWidth/3, startY);
+          ctx.moveTo(xPosition - flameWidthInner/2, yStart);
+          ctx.quadraticCurveTo(xPosition - flameWidthInner/4, yStart + flameLengthInner, xPosition, yStart + flameLengthInner * 1.2);
+          ctx.quadraticCurveTo(xPosition + flameWidthInner/4, yStart + flameLengthInner, xPosition + flameWidthInner/2, yStart);
           ctx.closePath();
           ctx.fillStyle = colors.inner;
           ctx.shadowBlur = 10;
           ctx.shadowColor = colors.innerShadow;
           ctx.fill();
+
+          // White-hot core
+          ctx.beginPath();
+          ctx.moveTo(xPosition - flameWidthInner/3, yStart);
+          ctx.quadraticCurveTo(xPosition, yStart + flameLengthInner * 0.6, xPosition + flameWidthInner/3, yStart);
+          ctx.closePath();
+          ctx.fillStyle = '#ffffff';
+          ctx.fill();
         };
 
-        drawFlame(-nozzleOffset);
-        drawFlame(nozzleOffset);
+        drawInnerFlame(-width * 0.165, startYInner - height * 0.02); // Shifted left flame upward
+        drawInnerFlame(width * 0.125, startYInner - height * 0.02); // Shifted right flame slightly upward
         ctx.restore();
-
-        ctx.drawImage(this._img, -width * 1.0, -height * 1.0, width * 2.0, height * 2.0);
       }
     }
   },
@@ -589,41 +660,68 @@ export const SHIPS = [
     draw: function(ctx, width, height, color) {
       if (!this._img) { this._img = new Image(); this._img.src = '/player craftship/Phantom 7.png'; }
       if (this._img.complete && this._img.naturalWidth > 0) {
-        ctx.save();
         const flicker = 0.8 + Math.random() * 0.4;
-        const flameLength = height * 0.55 * flicker;
-        const nozzleOffset = width * 0.10;
-        const startY = height * 0.50;
-        const flameWidth = width * 0.14;
-
         const colors = getFlameColors(color || this.color);
 
-        const drawFlame = (xPosition) => {
+        // 1. Draw outer flames BEHIND the ship
+        ctx.save();
+        const flameLengthOuter = height * 0.58 * flicker;
+        const startYOuter = height * 0.38; // Moved downward (was 0.35)
+        const flameWidthOuter = width * 0.14;
+        const nozzleOffset = width * 0.10;
+        const xOffset = width * 0.028; // Shifted right
+        const leftX = -nozzleOffset + xOffset + width * 0.015; // Shifted left flame slightly rightward
+        const rightX = nozzleOffset + xOffset;
+
+        const drawOuterFlame = (xPosition) => {
           ctx.beginPath();
-          ctx.moveTo(xPosition - flameWidth/2, startY);
-          ctx.quadraticCurveTo(xPosition - flameWidth/4, startY + flameLength, xPosition, startY + flameLength * 1.2);
-          ctx.quadraticCurveTo(xPosition + flameWidth/4, startY + flameLength, xPosition + flameWidth/2, startY);
+          ctx.moveTo(xPosition - flameWidthOuter/2, startYOuter);
+          ctx.quadraticCurveTo(xPosition - flameWidthOuter/4, startYOuter + flameLengthOuter, xPosition, startYOuter + flameLengthOuter * 1.2);
+          ctx.quadraticCurveTo(xPosition + flameWidthOuter/4, startYOuter + flameLengthOuter, xPosition + flameWidthOuter/2, startYOuter);
           ctx.closePath();
           ctx.fillStyle = colors.outer;
           ctx.shadowBlur = 20;
           ctx.shadowColor = colors.shadow;
           ctx.fill();
+        };
 
+        drawOuterFlame(leftX);
+        drawOuterFlame(rightX);
+        ctx.restore();
+
+        // 2. Draw the ship image
+        ctx.drawImage(this._img, -width * 1.0, -height * 1.0, width * 2.0, height * 2.0);
+
+        // 3. Draw the inner flames/cores ON TOP of the ship (emerging through the thrusters)
+        ctx.save();
+        const flameLengthInner = height * 0.18 * flicker;
+        const startYInner = height * 0.53; // Moved downward (was 0.50)
+        const flameWidthInner = width * 0.08;
+
+        const drawInnerFlame = (xPosition) => {
+          // Bright green inner droplet
           ctx.beginPath();
-          ctx.moveTo(xPosition - flameWidth/3, startY);
-          ctx.quadraticCurveTo(xPosition, startY + flameLength * 0.8, xPosition + flameWidth/3, startY);
+          ctx.moveTo(xPosition - flameWidthInner/2, startYInner);
+          ctx.quadraticCurveTo(xPosition - flameWidthInner/4, startYInner + flameLengthInner, xPosition, startYInner + flameLengthInner * 1.2);
+          ctx.quadraticCurveTo(xPosition + flameWidthInner/4, startYInner + flameLengthInner, xPosition + flameWidthInner/2, startYInner);
           ctx.closePath();
           ctx.fillStyle = colors.inner;
           ctx.shadowBlur = 10;
           ctx.shadowColor = colors.innerShadow;
           ctx.fill();
+
+          // White-hot core
+          ctx.beginPath();
+          ctx.moveTo(xPosition - flameWidthInner/3, startYInner);
+          ctx.quadraticCurveTo(xPosition, startYInner + flameLengthInner * 0.6, xPosition + flameWidthInner/3, startYInner);
+          ctx.closePath();
+          ctx.fillStyle = '#ffffff';
+          ctx.fill();
         };
 
-        drawFlame(-nozzleOffset);
-        drawFlame(nozzleOffset);
+        drawInnerFlame(leftX);
+        drawInnerFlame(rightX);
         ctx.restore();
-
-        ctx.drawImage(this._img, -width * 1.0, -height * 1.0, width * 2.0, height * 2.0);
       }
     }
   },
