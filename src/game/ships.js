@@ -336,10 +336,10 @@ export const SHIPS = [
       if (this._img.complete && this._img.naturalWidth > 0) {
         ctx.save();
         const flicker = 0.8 + Math.random() * 0.4;
-        const flameLength = height * 0.60 * flicker; // Matched Ghost's flame length
-        const nozzleOffset = width * 0.14; // Matches the requested 0.14 spacing
-        const startY = height * 0.35; // Matched Ghost Y starting position (deep inside the hull)
-        const flameWidth = width * 0.14; // Matched Ghost's flame width
+        const flameLength = height * 0.40 * flicker; // Shorter flame length to keep it at 38px visible length
+        const nozzleOffset = width * 0.16; // Increased distance between flames (more outward)
+        const startY = height * 0.60; // Moved near the nozzle exit mouth to eliminate any gap
+        const flameWidth = width * 0.14; // Flame width matches the nozzle mouth (12px)
 
         const colors = getFlameColors(color || this.color);
 
