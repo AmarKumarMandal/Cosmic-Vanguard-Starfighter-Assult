@@ -337,7 +337,7 @@ export const SHIPS = [
         ctx.save();
         const flicker = 0.8 + Math.random() * 0.4;
         const flameLength = height * 0.40 * flicker; // Shorter flame length to keep it at 38px visible length
-        const nozzleOffset = width * 0.16; // Increased distance between flames (more outward)
+        const nozzleOffset = width * 0.14; // Aligned with the nozzle centers (closer together)
         const startY = height * 0.60; // Moved near the nozzle exit mouth to eliminate any gap
         const flameWidth = width * 0.096; // Flame width decreased to 8px at scale 83 (0.096 * width)
 
