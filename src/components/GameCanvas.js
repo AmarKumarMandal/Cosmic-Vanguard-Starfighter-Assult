@@ -51,13 +51,14 @@ export default function GameCanvas() {
         console.log(`[LOAD] Bank initialized from disk: ${parsed}`);
       }
     }
-    setBankLoaded(true);
 
     const savedUnlocked = localStorage.getItem('spaceWarUnlocked');
     if (savedUnlocked) setUnlockedShips(JSON.parse(savedUnlocked));
 
     const savedActiveShip = localStorage.getItem('spaceWarActiveShip');
     if (savedActiveShip) setActiveShipId(savedActiveShip);
+    
+    setBankLoaded(true);
   }, []);
 
   useEffect(() => {
@@ -68,12 +69,16 @@ export default function GameCanvas() {
   }, [globalMoney, bankLoaded]);
 
   useEffect(() => {
-    localStorage.setItem('spaceWarUnlocked', JSON.stringify(unlockedShips));
-  }, [unlockedShips]);
+    if (bankLoaded) {
+      localStorage.setItem('spaceWarUnlocked', JSON.stringify(unlockedShips));
+    }
+  }, [unlockedShips, bankLoaded]);
 
   useEffect(() => {
-    localStorage.setItem('spaceWarActiveShip', activeShipId);
-  }, [activeShipId]);
+    if (bankLoaded) {
+      localStorage.setItem('spaceWarActiveShip', activeShipId);
+    }
+  }, [activeShipId, bankLoaded]);
 
   useEffect(() => {
     if (canvasRef.current && !gameRef.current) {
@@ -193,7 +198,6 @@ export default function GameCanvas() {
         <div id="main-menu" className="ui-overlay">
           <div className="glass-panel">
              <h1 className="neon-text">SPACE WAR</h1>
-             <p className="high-score-display">High Score: <span className="highlight">{highScore}</span> Wave</p>
               <div className="menu-buttons">
                  <>
                    {hasActiveGame && <button onClick={continueGame} className="glow-on-hover">CONTINUE</button>}

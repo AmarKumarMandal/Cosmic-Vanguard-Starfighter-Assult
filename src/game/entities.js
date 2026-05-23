@@ -1,22 +1,25 @@
-// Global Enemy Assets Pre-loaded for performance (Client-side only)
-let ENEMY_SMALL_IMG = null;
-let ENEMY_BOSS_IMG = null;
-let ENEMY_LEVEL_BOSS_IMG = null;
+// Pre-loaded Enemy Assets for all 10 levels (Client-side only)
+const ENEMY_IMAGES = {};
 
 if (typeof window !== 'undefined') {
-  ENEMY_SMALL_IMG = new Image();
-  ENEMY_SMALL_IMG.src = '/enemy spmall trrops ship.png';
-  ENEMY_BOSS_IMG = new Image();
-  ENEMY_BOSS_IMG.src = '/wave 1 boss.png';
-  ENEMY_LEVEL_BOSS_IMG = new Image();
-  ENEMY_LEVEL_BOSS_IMG.src = '/enemy/level 1 boss.png';
+  for (let lvl = 1; lvl <= 10; lvl++) {
+    ENEMY_IMAGES[lvl] = {
+      enemy: new Image(),
+      wave_boss: new Image(),
+      main_boss: new Image()
+    };
+    ENEMY_IMAGES[lvl].enemy.src = `/enemy/level_${lvl}_enemy.png`;
+    ENEMY_IMAGES[lvl].wave_boss.src = `/enemy/level_${lvl}_wave_boss.png`;
+    ENEMY_IMAGES[lvl].main_boss.src = `/enemy/level_${lvl}_main_boss.png`;
+  }
 }
+
 
 export class Player {
   constructor(canvas, config = null) {
     this.canvas = canvas;
-    this.width = 90;
-    this.height = 90;
+    this.width = 83;
+    this.height = 83;
     this.x = canvas.width / 2;
     this.y = canvas.height - 60;
 
@@ -121,30 +124,31 @@ export class Player {
 }
 
 export class Enemy {
-  constructor(canvas, x, y, isBoss = false, wave = 1, isLevelBoss = false) {
+  constructor(canvas, x, y, isBoss = false, wave = 1, isLevelBoss = false, level = 1) {
     this.canvas = canvas;
     this.isBoss = isBoss;
     this.isLevelBoss = isLevelBoss;
+    this.level = level;
     this.x = x;
     this.y = y;
 
     if (this.isLevelBoss) {
       this.width = 400;
-      this.height = 300;
+      this.height = 350;
       this.hp = 5000 + (wave * 2000); // 'wave' will be passed as the level number
       this.speed = 60;
       this.color = '#ffcc00'; // Gold
-      this.shootCooldown = 150;
+      this.shootCooldown = 500; // Balanced delay for dodging
     } else if (this.isBoss) {
       this.width = 280;
-      this.height = 200;
+      this.height = 280;
       this.hp = 1500 + (wave * 500);
       this.speed = 100;
       this.color = '#ff0055'; // neon red
       this.shootCooldown = Math.max(200, 800 - (wave * 60));
     } else {
-      this.width = 85;
-      this.height = 85;
+      this.width = 120;
+      this.height = 120;
       this.hp = 50 + (wave * 50);
       this.speed = 100 + (wave * 10);
       this.color = '#c5c6c7'; // grey/white
@@ -181,9 +185,16 @@ export class Enemy {
     ctx.save();
     ctx.translate(this.x, this.y);
 
+    // Pick image set based on level
+    let imgType = 'enemy';
+    if (this.isLevelBoss) imgType = 'main_boss';
+    else if (this.isBoss) imgType = 'wave_boss';
+
+    const enemyImg = ENEMY_IMAGES[this.level]?.[imgType];
+
     if (this.isLevelBoss) {
-      if (ENEMY_LEVEL_BOSS_IMG && ENEMY_LEVEL_BOSS_IMG.complete && ENEMY_LEVEL_BOSS_IMG.naturalWidth > 0) {
-        ctx.drawImage(ENEMY_LEVEL_BOSS_IMG, -this.width / 2, -this.height / 2, this.width, this.height);
+      if (enemyImg && enemyImg.complete && enemyImg.naturalWidth > 0) {
+        ctx.drawImage(enemyImg, -this.width / 2, -this.height / 2, this.width, this.height);
       } else {
         // Fallback: gold rectangle
         ctx.strokeStyle = '#ffcc00';
@@ -193,16 +204,16 @@ export class Enemy {
         ctx.strokeRect(-this.width / 2, -this.height / 2, this.width, this.height);
       }
     } else if (this.isBoss) {
-      if (ENEMY_BOSS_IMG && ENEMY_BOSS_IMG.complete && ENEMY_BOSS_IMG.naturalWidth > 0) {
-        ctx.drawImage(ENEMY_BOSS_IMG, -140, -100, 280, 200);
+      if (enemyImg && enemyImg.complete && enemyImg.naturalWidth > 0) {
+        ctx.drawImage(enemyImg, -this.width / 2, -this.height / 2, this.width, this.height);
       } else {
         ctx.strokeStyle = '#ff0055';
         ctx.lineWidth = 4;
-        ctx.strokeRect(-140, -100, 280, 200);
+        ctx.strokeRect(-this.width / 2, -this.height / 2, this.width, this.height);
       }
     } else {
-      if (ENEMY_SMALL_IMG && ENEMY_SMALL_IMG.complete && ENEMY_SMALL_IMG.naturalWidth > 0) {
-        ctx.drawImage(ENEMY_SMALL_IMG, -this.width / 2, -this.height / 2, this.width, this.height);
+      if (enemyImg && enemyImg.complete && enemyImg.naturalWidth > 0) {
+        ctx.drawImage(enemyImg, -this.width / 2, -this.height / 2, this.width, this.height);
       } else {
         ctx.fillStyle = '#0b0c10';
         ctx.strokeStyle = this.color;
@@ -245,8 +256,8 @@ export class Projectile {
     this.y = y;
     this.vx = vx;
     this.vy = vy;
-    this.width = (style === 'red-spread' || style === 'spread') ? 18 : 6;
-    this.height = (style === 'red-spread' || style === 'spread') ? 30 : 16;
+    this.width = (style === 'red-spread' || style === 'spread') ? 10 : 4;
+    this.height = (style === 'red-spread' || style === 'spread') ? 18 : 10;
     this.isEnemy = isEnemy;
     this.color = color || (isEnemy ? '#ff0055' : '#66fcf1');
     this.damage = (isEnemy ? 1 : 10) * damageMultiplier;
@@ -270,8 +281,8 @@ export class Projectile {
 
       // Tail
       for (let i = 1; i <= 6; i++) {
-        const size = 5 - i * 0.7;
-        const yOffset = i * 4;
+        const size = 3 - i * 0.4;
+        const yOffset = i * 2.5;
 
         ctx.beginPath();
         ctx.arc(0, yOffset, size * 1.5, 0, Math.PI * 2);
@@ -286,24 +297,24 @@ export class Projectile {
 
       // Head Halo Ring
       ctx.beginPath();
-      ctx.arc(0, -2, 8, 0, Math.PI * 2);
+      ctx.arc(0, -1, 5, 0, Math.PI * 2);
       ctx.strokeStyle = this.color;
-      ctx.lineWidth = 2;
+      ctx.lineWidth = 1.5;
       ctx.stroke();
 
       // Head Core
       ctx.beginPath();
-      ctx.arc(0, -2, 5, 0, Math.PI * 2);
+      ctx.arc(0, -1, 3, 0, Math.PI * 2);
       ctx.fillStyle = '#ffffff';
       ctx.fill();
 
       // Side specks
       ctx.fillStyle = this.color;
       ctx.globalAlpha = 0.8;
-      ctx.fillRect(-6, 2, 2, 2);
-      ctx.fillRect(4, 2, 2, 2);
-      ctx.fillRect(-4, 7, 1.5, 1.5);
-      ctx.fillRect(3, 7, 1.5, 1.5);
+      ctx.fillRect(-4, 1, 1.5, 1.5);
+      ctx.fillRect(2.5, 1, 1.5, 1.5);
+      ctx.fillRect(-3, 4, 1, 1);
+      ctx.fillRect(2, 4, 1, 1);
       ctx.globalAlpha = 1.0;
     } else {
       ctx.fillStyle = '#fff';

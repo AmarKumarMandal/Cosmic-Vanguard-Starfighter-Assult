@@ -11,10 +11,10 @@ function ShipThumbnail({ ship, isActive, isLocked, onClick }) {
     const render = () => {
       if (canvasRef.current) {
         const ctx = canvasRef.current.getContext('2d');
-        ctx.clearRect(0, 0, 100, 100);
+        ctx.clearRect(0, 0, 150, 150);
         ctx.save();
-        ctx.translate(50, 50); 
-        ctx.scale(1.45, 1.45); // Balanced middle-ground scale
+        ctx.translate(75, 75); 
+        ctx.scale(2.15, 2.15); // Balanced middle-ground scale for 150x150 canvas
         ship.draw(ctx, 40, 40, ship.color);
         ctx.restore();
       }
@@ -31,7 +31,7 @@ function ShipThumbnail({ ship, isActive, isLocked, onClick }) {
       className={`ship-thumbnail ${isActive ? 'active' : ''} ${isLocked ? 'locked' : ''}`}
       onClick={onClick}
     >
-      <canvas ref={canvasRef} width={100} height={100}></canvas>
+      <canvas ref={canvasRef} width={150} height={150}></canvas>
     </div>
   );
 }

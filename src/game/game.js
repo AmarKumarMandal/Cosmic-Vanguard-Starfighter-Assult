@@ -210,14 +210,14 @@ export class Game {
     if (this.enemiesSpawnedThisWave < totalEnemies && this.enemySpawnTimer > Math.max(0.5, 2.0 - (this.wave * 0.15))) {
       this.enemySpawnTimer = 0;
       const x = Math.random() * (this.canvas.width - 80) + 40;
-      this.enemies.push(new Enemy(this.canvas, x, -50, false, this.wave));
+      this.enemies.push(new Enemy(this.canvas, x, -50, false, this.wave, false, this.level));
       this.enemiesSpawnedThisWave++;
     }
 
     // Boss appears when exactly 20 small enemies are left
     if (this.enemiesSpawnedThisWave === bossThreshold && !this.isBossSpawned) {
       this.isBossSpawned = true;
-      this.enemies.push(new Enemy(this.canvas, this.canvas.width/2, -100, true, this.wave));
+      this.enemies.push(new Enemy(this.canvas, this.canvas.width/2, -100, true, this.wave, false, this.level));
     }
   }
 
@@ -295,7 +295,7 @@ export class Game {
                     this.enemies = []; // wipe normal enemies
                     this.projectiles = []; // wipe normal projectiles
                     // Spawn Level Boss
-                    this.enemies.push(new Enemy(this.canvas, this.canvas.width/2, -150, false, this.level, true));
+                    this.enemies.push(new Enemy(this.canvas, this.canvas.width/2, -150, false, this.level, true, this.level));
                     this.player.hp = Math.min(this.player.maxHp, this.player.hp + 100); // big heal before boss
                     this.updateHUD();
                     return;
@@ -410,8 +410,8 @@ export class Game {
               true, c, 10, 'spread'
             ));
           }
-          // Homing missile on separate slow cooldown
-          if (time - this.lastMissileTime > this.missileCooldown) {
+          // Homing missile on separate slow cooldown (Only for Level 2 and above)
+          if (this.level > 1 && time - this.lastMissileTime > this.missileCooldown) {
             this.lastMissileTime = time;
             this.missiles.push(new Missile(enemy.x, enemy.y + 160, this.player));
           }

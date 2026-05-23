@@ -31,7 +31,7 @@ export default function LevelMap({ highScore, onSelect, onBack }) {
             {PATH_NODES.map((node, i) => {
               if (i === PATH_NODES.length - 1) return null;
               const nextNode = PATH_NODES[i + 1];
-              const isUnlocked = node.id < maxUnlocked; // Line is unlocked if we've beaten the origin node
+              const isUnlocked = true; // node.id < maxUnlocked; // Line is unlocked if we've beaten the origin node
               return (
                 <line
                   key={`path-${node.id}`}
@@ -46,7 +46,7 @@ export default function LevelMap({ highScore, onSelect, onBack }) {
           </svg>
 
           {PATH_NODES.map((node) => {
-            const isUnlocked = node.id <= maxUnlocked;
+            const isUnlocked = true; // node.id <= maxUnlocked;
             const isCompleted = node.id < maxUnlocked;
             const isCurrent = node.id === maxUnlocked;
             
