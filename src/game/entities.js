@@ -149,7 +149,16 @@ export class Enemy {
     } else {
       this.width = 120;
       this.height = 120;
-      this.hp = 50 + (wave * 50);
+      const tier = level + Math.floor((wave - 1) / 5);
+      const tierBase = tier * 100;
+      const subWave = ((wave - 1) % 5) + 1;
+      if (subWave <= 2) {
+        this.hp = tierBase;
+      } else if (subWave <= 4) {
+        this.hp = tierBase + 50;
+      } else {
+        this.hp = tierBase + 100;
+      }
       this.speed = 100 + (wave * 10);
       this.color = '#c5c6c7'; // grey/white
       this.shootCooldown = 1200;

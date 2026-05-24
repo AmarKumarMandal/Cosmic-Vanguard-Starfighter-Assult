@@ -53,7 +53,19 @@ export class Game {
     
     this.level = level;
     this.wave = 1;
-    this.targetWave = level * 5;
+    const waveCounts = {
+      1: 5,
+      2: 7,
+      3: 8,
+      4: 9,
+      5: 10,
+      6: 10,
+      7: 11,
+      8: 12,
+      9: 13,
+      10: 15
+    };
+    this.targetWave = waveCounts[level] || (level * 5);
     this.score = 0;
     this.money = 0;
     this.lastTime = performance.now();

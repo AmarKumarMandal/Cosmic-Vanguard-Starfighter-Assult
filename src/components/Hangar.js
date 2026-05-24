@@ -15,6 +15,8 @@ function ShipThumbnail({ ship, isActive, isLocked, onClick }) {
         ctx.save();
         ctx.translate(75, 75); 
         ctx.scale(2.15, 2.15); // Balanced middle-ground scale for 150x150 canvas
+        // Reduce overall glow/brightness for thumbnail display
+        ctx.filter = 'brightness(0.72)';
         ship.draw(ctx, 40, 40, ship.color);
         ctx.restore();
       }
@@ -141,9 +143,9 @@ export default function Hangar({ globalMoney, setGlobalMoney, unlockedShips, set
              <div className="stat-row">
                <div className="stat-label">POWER</div>
                <div className="stat-bar-bg">
-                 <div className="stat-bar-fill" style={{width: `${(selectedShip.stats.power/300)*100}%`}}></div>
+                 <div className="stat-bar-fill" style={{width: `${((selectedShip.engineSpecs.damage / 2) / 80) * 100}%`}}></div>
                </div>
-               <div className="stat-value">{selectedShip.stats.power}</div>
+               <div className="stat-value">{selectedShip.engineSpecs.damage / 2}</div>
              </div>
              <div className="stat-row">
                <div className="stat-label">ATTACK</div>
@@ -155,14 +157,21 @@ export default function Hangar({ globalMoney, setGlobalMoney, unlockedShips, set
              <div className="stat-row">
                <div className="stat-label">DEFENCE</div>
                <div className="stat-bar-bg">
-                 <div className="stat-bar-fill" style={{width: `${(selectedShip.stats.defense/200)*100}%`}}></div>
+                 <div className="stat-bar-fill" style={{width: `${(selectedShip.stats.defense/220)*100}%`}}></div>
                </div>
                <div className="stat-value">{selectedShip.stats.defense}</div>
              </div>
              <div className="stat-row">
+               <div className="stat-label">HP</div>
+               <div className="stat-bar-bg">
+                 <div className="stat-bar-fill" style={{width: `${(selectedShip.engineSpecs.rawHp/1500)*100}%`}}></div>
+               </div>
+               <div className="stat-value">{selectedShip.engineSpecs.rawHp}</div>
+             </div>
+             <div className="stat-row">
                <div className="stat-label">SPEED</div>
                <div className="stat-bar-bg">
-                 <div className="stat-bar-fill" style={{width: `${(selectedShip.stats.speed/100)*100}%`}}></div>
+                 <div className="stat-bar-fill" style={{width: `${(selectedShip.stats.speed/110)*100}%`}}></div>
                </div>
                <div className="stat-value">{selectedShip.stats.speed}</div>
              </div>
