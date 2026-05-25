@@ -112,7 +112,7 @@ export const SHIPS = [
     draw: function(ctx, width, height, color) {
       if (!this._img) {
         this._img = new Image();
-        this._img.src = '/player craftship/A1-cyan.png';
+        this._img.src = '/player craftship/A1-CYAN.png';
       }
       
       ctx.shadowBlur = 0; 
@@ -677,8 +677,8 @@ export const SHIPS = [
     color: '#ff0033',
     cost: 750000,
     weaponStyle: 'red-spread',
-    stats: { power: 175, attack: 130, defense: 120, speed: 65 },
-    engineSpecs: { rawHp: 650, rawSpeed: 520, fireRate: 170, damage: 140 },
+    stats: { power: 175, attack: 200, defense: 120, speed: 65 },
+    engineSpecs: { rawHp: 650, rawSpeed: 520, fireRate: 170, damage: 200 },
     draw: function(ctx, width, height, color) {
       if (!this._img) { this._img = new Image(); this._img.src = '/player craftship/Reaper.png'; }
       if (this._img.complete && this._img.naturalWidth > 0) {
@@ -728,8 +728,8 @@ export const SHIPS = [
     color: '#00ff00',
     cost: 2500000,
     weaponStyle: 'red-spread',
-    stats: { power: 300, attack: 140, defense: 200, speed: 50 },
-    engineSpecs: { rawHp: 1200, rawSpeed: 510, fireRate: 180, damage: 150 },
+    stats: { power: 300, attack: 200, defense: 200, speed: 50 },
+    engineSpecs: { rawHp: 1200, rawSpeed: 510, fireRate: 180, damage: 200 },
     draw: function(ctx, width, height, color) {
       if (!this._img) { this._img = new Image(); this._img.src = '/player craftship/Phantom 7.png'; }
       if (this._img.complete && this._img.naturalWidth > 0) {
@@ -806,8 +806,8 @@ export const SHIPS = [
     color: '#ffffff',
     cost: 3000000,
     weaponStyle: 'red-spread',
-    stats: { power: 300, attack: 150, defense: 220, speed: 40 },
-    engineSpecs: { rawHp: 1500, rawSpeed: 450, fireRate: 200, damage: 160 },
+    stats: { power: 300, attack: 200, defense: 220, speed: 40 },
+    engineSpecs: { rawHp: 1500, rawSpeed: 450, fireRate: 200, damage: 200 },
     draw: function(ctx, width, height, color) {
       if (!this._img) { this._img = new Image(); this._img.src = '/player craftship/White_Titan_Vulcan.png'; }
       if (this._img.complete && this._img.naturalWidth > 0) {

@@ -143,14 +143,14 @@ export default function Hangar({ globalMoney, setGlobalMoney, unlockedShips, set
              <div className="stat-row">
                <div className="stat-label">POWER</div>
                <div className="stat-bar-bg">
-                 <div className="stat-bar-fill" style={{width: `${((selectedShip.engineSpecs.damage / 2) / 80) * 100}%`}}></div>
+                 <div className="stat-bar-fill" style={{width: `${((selectedShip.engineSpecs.damage / 2) / 100) * 100}%`}}></div>
                </div>
                <div className="stat-value">{selectedShip.engineSpecs.damage / 2}</div>
              </div>
              <div className="stat-row">
                <div className="stat-label">ATTACK</div>
                <div className="stat-bar-bg">
-                 <div className="stat-bar-fill" style={{width: `${(selectedShip.stats.attack/150)*100}%`}}></div>
+                 <div className="stat-bar-fill" style={{width: `${(selectedShip.stats.attack/200)*100}%`}}></div>
                </div>
                <div className="stat-value">{selectedShip.stats.attack}</div>
              </div>

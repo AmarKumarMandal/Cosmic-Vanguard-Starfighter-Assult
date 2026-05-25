@@ -22,6 +22,23 @@ export default function GameCanvas() {
   const [startingWave, setStartingWave] = useState(1);
   
   const gameRef = useRef(null);
+  const activeKeysRef = useRef({});
+
+  const handleControlStart = (e, key) => {
+    e.preventDefault();
+    if (!activeKeysRef.current[key]) {
+      activeKeysRef.current[key] = true;
+      window.dispatchEvent(new KeyboardEvent('keydown', { key }));
+    }
+  };
+
+  const handleControlEnd = (e, key) => {
+    e.preventDefault();
+    if (activeKeysRef.current[key]) {
+      activeKeysRef.current[key] = false;
+      window.dispatchEvent(new KeyboardEvent('keyup', { key }));
+    }
+  };
 
   const bankSessionMoney = () => {
     if (gameRef.current && gameRef.current.money > 0) {
@@ -249,10 +266,100 @@ export default function GameCanvas() {
               </div>
             </div>
           </div>
-          <div className="hp-bar-container" style={{position: 'absolute', bottom: '40px', left: '2rem', display: 'flex', justifyContent: 'center', alignItems: 'center'}}>
+          <div className="hp-bar-container" style={{position: 'absolute', bottom: '40px', left: '50%', transform: 'translateX(-50%)', display: 'none', justifyContent: 'center', alignItems: 'center'}}>
             <div id="hp-bar" style={{position: 'absolute', top: 0, left: 0, zIndex: 1}}></div>
             <span id="hp-text" style={{position: 'relative', zIndex: 2, fontSize: '0.9rem', fontWeight: 'bold', textShadow: '1px 1px 3px rgba(0,0,0,0.8)'}}>-- / --</span>
           </div>
+          
+          {/* On-screen Directional Controls (Split Left and Right) */}
+          {/* Left Controls: Left (◀) and Down (▼) */}
+          <div className="dpad-container dpad-left" style={{
+            position: 'absolute',
+            bottom: '40px',
+            left: '40px',
+            width: '150px',
+            height: '150px',
+            display: 'grid',
+            gridTemplateColumns: 'repeat(3, 1fr)',
+            gridTemplateRows: 'repeat(3, 1fr)',
+            gap: '8px',
+            zIndex: 100,
+            pointerEvents: 'auto'
+          }}>
+            <div></div><div></div><div></div>
+            
+            <button 
+              className="dpad-btn"
+              onTouchStart={(e) => handleControlStart(e, 'ArrowLeft')}
+              onTouchEnd={(e) => handleControlEnd(e, 'ArrowLeft')}
+              onTouchCancel={(e) => handleControlEnd(e, 'ArrowLeft')}
+              onMouseDown={(e) => handleControlStart(e, 'ArrowLeft')}
+              onMouseUp={(e) => handleControlEnd(e, 'ArrowLeft')}
+              onMouseLeave={(e) => handleControlEnd(e, 'ArrowLeft')}
+            >
+              ◀
+            </button>
+            <div></div><div></div>
+
+            <div></div>
+            <button 
+              className="dpad-btn"
+              onTouchStart={(e) => handleControlStart(e, 'ArrowDown')}
+              onTouchEnd={(e) => handleControlEnd(e, 'ArrowDown')}
+              onTouchCancel={(e) => handleControlEnd(e, 'ArrowDown')}
+              onMouseDown={(e) => handleControlStart(e, 'ArrowDown')}
+              onMouseUp={(e) => handleControlEnd(e, 'ArrowDown')}
+              onMouseLeave={(e) => handleControlEnd(e, 'ArrowDown')}
+            >
+              ▼
+            </button>
+            <div></div>
+          </div>
+
+          {/* Right Controls: Up (▲) and Right (▶) */}
+          <div className="dpad-container dpad-right" style={{
+            position: 'absolute',
+            bottom: '40px',
+            right: '40px',
+            width: '150px',
+            height: '150px',
+            display: 'grid',
+            gridTemplateColumns: 'repeat(3, 1fr)',
+            gridTemplateRows: 'repeat(3, 1fr)',
+            gap: '8px',
+            zIndex: 100,
+            pointerEvents: 'auto'
+          }}>
+            <div></div>
+            <button 
+              className="dpad-btn"
+              onTouchStart={(e) => handleControlStart(e, 'ArrowUp')}
+              onTouchEnd={(e) => handleControlEnd(e, 'ArrowUp')}
+              onTouchCancel={(e) => handleControlEnd(e, 'ArrowUp')}
+              onMouseDown={(e) => handleControlStart(e, 'ArrowUp')}
+              onMouseUp={(e) => handleControlEnd(e, 'ArrowUp')}
+              onMouseLeave={(e) => handleControlEnd(e, 'ArrowUp')}
+            >
+              ▲
+            </button>
+            <div></div>
+
+            <div></div><div></div>
+            <button 
+              className="dpad-btn"
+              onTouchStart={(e) => handleControlStart(e, 'ArrowRight')}
+              onTouchEnd={(e) => handleControlEnd(e, 'ArrowRight')}
+              onTouchCancel={(e) => handleControlEnd(e, 'ArrowRight')}
+              onMouseDown={(e) => handleControlStart(e, 'ArrowRight')}
+              onMouseUp={(e) => handleControlEnd(e, 'ArrowRight')}
+              onMouseLeave={(e) => handleControlEnd(e, 'ArrowRight')}
+            >
+              ▶
+            </button>
+
+            <div></div><div></div><div></div>
+          </div>
+
           <div style={{display: 'flex', gap: '10px', flexDirection: 'column'}}>
             <button className="btn-secondary" style={{padding: '5px 15px', height: 'fit-content', opacity: 0.7, zIndex: 10, pointerEvents: 'auto', background: 'rgba(0,0,0,0.5)'}} onClick={() => window.dispatchEvent(new CustomEvent('toggle-pause'))}>
               Pause (Esc)

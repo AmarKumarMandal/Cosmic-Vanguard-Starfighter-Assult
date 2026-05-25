@@ -14,6 +14,11 @@ if (typeof window !== 'undefined') {
   }
 }
 
+const STING_MISSILE_IMG = typeof window !== 'undefined' ? new Image() : null;
+if (STING_MISSILE_IMG) {
+  STING_MISSILE_IMG.src = '/player craftship/sting_missile.png';
+}
+
 
 export class Player {
   constructor(canvas, config = null) {
@@ -31,6 +36,7 @@ export class Player {
     this.damageMultiplier = (config?.engineSpecs?.damage || 20) / 20;
     this.weaponStyle = config?.weaponStyle || 'default';
     this.drawPath = config?.draw;
+    this.id = config?.id || 'starter';
 
     this.vx = 0;
     this.vy = 0;
@@ -109,6 +115,20 @@ export class Player {
       ctx.arc(0, this.height / 2 + Math.random() * 5, 4, 0, Math.PI * 2);
       ctx.fill();
     }
+
+    // Draw thin floating player HP bar below the aircraft
+    ctx.shadowBlur = 0;
+    const barWidth = 80;
+    const barHeight = 4;
+    const barY = this.height / 2 + 25;
+
+    // Background bar (Dark red overlay)
+    ctx.fillStyle = 'rgba(255, 0, 0, 0.3)';
+    ctx.fillRect(-barWidth / 2, barY, barWidth, barHeight);
+
+    // Foreground health bar (Neon green)
+    ctx.fillStyle = '#00ff88';
+    ctx.fillRect(-barWidth / 2, barY, barWidth * Math.max(0, this.hp / this.maxHp), barHeight);
 
     ctx.restore();
   }
@@ -265,8 +285,13 @@ export class Projectile {
     this.y = y;
     this.vx = vx;
     this.vy = vy;
-    this.width = (style === 'red-spread' || style === 'spread') ? 10 : 4;
-    this.height = (style === 'red-spread' || style === 'spread') ? 18 : 10;
+    if (style === 'sting_missile') {
+      this.width = 20;
+      this.height = 55;
+    } else {
+      this.width = (style === 'red-spread' || style === 'spread') ? 10 : 4;
+      this.height = (style === 'red-spread' || style === 'spread') ? 18 : 10;
+    }
     this.isEnemy = isEnemy;
     this.color = color || (isEnemy ? '#ff0055' : '#66fcf1');
     this.damage = (isEnemy ? 1 : 10) * damageMultiplier;
@@ -274,7 +299,48 @@ export class Projectile {
     this.markedForDeletion = false;
   }
 
-  update(dt) {
+  update(dt, enemies) {
+    if (this.style === 'sting_missile' && !this.isEnemy && enemies && enemies.length > 0) {
+      // Find the nearest active enemy
+      let nearestEnemy = null;
+      let minDistance = Infinity;
+      enemies.forEach(enemy => {
+        const dx = enemy.x - this.x;
+        const dy = enemy.y - this.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < minDistance) {
+          minDistance = dist;
+          nearestEnemy = enemy;
+        }
+      });
+
+      if (nearestEnemy) {
+        // Calculate the vector to the target
+        const dx = nearestEnemy.x - this.x;
+        const dy = nearestEnemy.y - this.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+
+        if (dist > 0) {
+          // Desired velocity vector (normalized to missile speed)
+          const missileSpeed = Math.sqrt(this.vx * this.vx + this.vy * this.vy) || 450;
+          const targetVx = (dx / dist) * missileSpeed;
+          const targetVy = (dy / dist) * missileSpeed;
+
+          // Homing interpolation (smooth steering / turning rate)
+          const steerForce = 6.0; // Higher = tighter turns, lower = sluggish turns
+          this.vx += (targetVx - this.vx) * steerForce * dt;
+          this.vy += (targetVy - this.vy) * steerForce * dt;
+
+          // Normalize actual velocity to the missileSpeed to keep it constant
+          const currentSpeed = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
+          if (currentSpeed > 0) {
+            this.vx = (this.vx / currentSpeed) * missileSpeed;
+            this.vy = (this.vy / currentSpeed) * missileSpeed;
+          }
+        }
+      }
+    }
+
     this.x += this.vx * dt;
     this.y += this.vy * dt;
   }
@@ -284,7 +350,16 @@ export class Projectile {
     ctx.translate(this.x, this.y);
     ctx.rotate(Math.atan2(this.vy, this.vx) + Math.PI / 2);
 
-    if (this.style === 'red-spread' || this.style === 'spread') {
+    if (this.style === 'sting_missile') {
+      if (STING_MISSILE_IMG && STING_MISSILE_IMG.complete && STING_MISSILE_IMG.naturalWidth > 0) {
+        ctx.drawImage(STING_MISSILE_IMG, -this.width / 2, -this.height / 2, this.width, this.height);
+      } else {
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = '#ff6600';
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(-this.width / 2, -this.height / 2, this.width, this.height);
+      }
+    } else if (this.style === 'red-spread' || this.style === 'spread') {
       ctx.shadowBlur = 15;
       ctx.shadowColor = this.color;
 

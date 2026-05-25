@@ -403,6 +403,22 @@ export class Game {
       }
     }
 
+    // Reaper wing-mounted missiles (Fired slower, travels slower, with independent cooldown)
+    if (this.player.id === 'reaper') {
+      if (typeof this.player.lastMissileTime === 'undefined') {
+        this.player.lastMissileTime = 0;
+      }
+      const missileCooldown = 800; // ms between missile shots (delays)
+      if (time - this.player.lastMissileTime > missileCooldown) {
+        this.player.lastMissileTime = time;
+        const d = this.player.damageMultiplier;
+        const color = this.player.color;
+        // Launch 2 sting missiles spaced 100px apart (50px from center in each direction), with slower speed (-450 velocity)
+        this.projectiles.push(new Projectile(this.player.x - 50, this.player.y - 10, 0, -450, false, color, d, 'sting_missile'));
+        this.projectiles.push(new Projectile(this.player.x + 50, this.player.y - 10, 0, -450, false, color, d, 'sting_missile'));
+      }
+    }
+
     // Enemy fire
     this.enemies.forEach(enemy => {
       if (time - enemy.lastShotTime > enemy.shootCooldown) {
@@ -478,7 +494,7 @@ export class Game {
       this.spawnEnemy(dt);
       
       this.enemies.forEach(e => e.update(dt));
-      this.projectiles.forEach(p => p.update(dt));
+      this.projectiles.forEach(p => p.update(dt, this.enemies));
       this.particles.forEach(p => p.update(dt));
       this.missiles.forEach(m => m.update(dt));
 
