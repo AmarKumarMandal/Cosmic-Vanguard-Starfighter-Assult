@@ -5,6 +5,21 @@ import Hangar from './Hangar';
 import LevelMap from './LevelMap';
 import { SHIPS } from '@/game/ships';
 
+const abilityConfig = {
+  'starter': { name: 'Drones', color: '#66fcf1' },
+  'z-51-gen-1': { name: 'Blades', color: '#ffd700' },
+  'ship-1': { name: 'Freeze', color: '#00e5ff' },
+  'z-51': { name: 'Chain', color: '#e84545' },
+  'spectre': { name: 'Laser', color: '#00ff00' },
+  'ship-3': { name: 'Decoy', color: '#a020f0' },
+  'apex': { name: 'Warp', color: '#ff6600' },
+  'shadow-stealth-spectre': { name: 'None', color: 'rgba(255, 255, 255, 0.2)' },
+  'gold-eagle': { name: 'Shield', color: '#ffd700' },
+  'reaper': { name: 'Solar', color: '#ff0033' },
+  'ship-5': { name: 'Drones', color: '#00ff00' },
+  'white-titan-vulcan': { name: 'Solar', color: '#ffffff' }
+};
+
 export default function GameCanvas() {
   const canvasRef = useRef(null);
   const [gameState, setGameState] = useState('menu'); // 'menu', 'playing', 'gameover', 'paused'
@@ -21,6 +36,8 @@ export default function GameCanvas() {
   const [showLevelSelect, setShowLevelSelect] = useState(false);
   const [startingWave, setStartingWave] = useState(1);
   
+  const currentAbility = abilityConfig[activeShipId] || { name: 'Power', color: '#66fcf1' };
+  const hasAbility = currentAbility.name !== 'None';
   const gameRef = useRef(null);
   const activeKeysRef = useRef({});
 
@@ -266,9 +283,45 @@ export default function GameCanvas() {
               </div>
             </div>
           </div>
-          <div className="hp-bar-container" style={{position: 'absolute', bottom: '40px', left: '50%', transform: 'translateX(-50%)', display: 'none', justifyContent: 'center', alignItems: 'center'}}>
-            <div id="hp-bar" style={{position: 'absolute', top: 0, left: 0, zIndex: 1}}></div>
-            <span id="hp-text" style={{position: 'relative', zIndex: 2, fontSize: '0.9rem', fontWeight: 'bold', textShadow: '1px 1px 3px rgba(0,0,0,0.8)'}}>-- / --</span>
+          {/* Bottom Fixed Full-Width HP Bar */}
+          <div style={{
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            width: '100%',
+            height: '8px',
+            background: 'rgba(255, 0, 51, 0.1)',
+            borderTop: '1px solid rgba(255, 255, 255, 0.05)',
+            zIndex: 90,
+            pointerEvents: 'none'
+          }}>
+            <div 
+              id="hp-bar" 
+              style={{
+                height: '100%',
+                width: '100%',
+                background: 'linear-gradient(to right, #00ff88, #66fcf1)',
+                boxShadow: '0 0 10px #00ff88, 0 0 20px rgba(102, 252, 241, 0.5)',
+                transition: 'width 0.15s ease-out'
+              }}
+            ></div>
+          </div>
+          {/* Centered HP Text Readout just above bottom bar */}
+          <div style={{
+            position: 'absolute',
+            bottom: '12px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 91,
+            pointerEvents: 'none',
+            fontFamily: 'monospace',
+            fontSize: '0.85rem',
+            fontWeight: '800',
+            color: '#ffffff',
+            textShadow: '0 2px 8px rgba(0,0,0,0.9), 0 0 4px rgba(255,255,255,0.5)',
+            letterSpacing: '1px'
+          }}>
+            HP: <span id="hp-text">-- / --</span>
           </div>
           
           {/* On-screen Directional Controls (Split Left and Right) */}
@@ -316,6 +369,20 @@ export default function GameCanvas() {
             <div></div>
           </div>
 
+          {/* Active Ability Button Left */}
+          {hasAbility && (
+            <button 
+              className="ability-btn ability-btn-left"
+              style={{
+                '--ability-color': currentAbility.color
+              }}
+              onClick={() => window.dispatchEvent(new CustomEvent('activate-ability'))}
+            >
+              {currentAbility.name}
+              <span id="ability-cooldown-left" className="ability-btn-cooldown-overlay"></span>
+            </button>
+          )}
+
           {/* Right Controls: Up (▲) and Right (▶) */}
           <div className="dpad-container dpad-right" style={{
             position: 'absolute',
@@ -359,6 +426,20 @@ export default function GameCanvas() {
 
             <div></div><div></div><div></div>
           </div>
+
+          {/* Active Ability Button Right */}
+          {hasAbility && (
+            <button 
+              className="ability-btn ability-btn-right"
+              style={{
+                '--ability-color': currentAbility.color
+              }}
+              onClick={() => window.dispatchEvent(new CustomEvent('activate-ability'))}
+            >
+              {currentAbility.name}
+              <span id="ability-cooldown-right" className="ability-btn-cooldown-overlay"></span>
+            </button>
+          )}
 
           <div style={{display: 'flex', gap: '10px', flexDirection: 'column'}}>
             <button className="btn-secondary" style={{padding: '5px 15px', height: 'fit-content', opacity: 0.7, zIndex: 10, pointerEvents: 'auto', background: 'rgba(0,0,0,0.5)'}} onClick={() => window.dispatchEvent(new CustomEvent('toggle-pause'))}>

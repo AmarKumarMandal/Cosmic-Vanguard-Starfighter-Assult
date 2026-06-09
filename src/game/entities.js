@@ -116,19 +116,7 @@ export class Player {
       ctx.fill();
     }
 
-    // Draw thin floating player HP bar below the aircraft
-    ctx.shadowBlur = 0;
-    const barWidth = 80;
-    const barHeight = 4;
-    const barY = this.height / 2 + 25;
-
-    // Background bar (Dark red overlay)
-    ctx.fillStyle = 'rgba(255, 0, 0, 0.3)';
-    ctx.fillRect(-barWidth / 2, barY, barWidth, barHeight);
-
-    // Foreground health bar (Neon green)
-    ctx.fillStyle = '#00ff88';
-    ctx.fillRect(-barWidth / 2, barY, barWidth * Math.max(0, this.hp / this.maxHp), barHeight);
+    // Floating HP bar removed in favor of full-width bottom bar
 
     ctx.restore();
   }
@@ -152,32 +140,80 @@ export class Enemy {
     this.x = x;
     this.y = y;
 
+    const tier = level + Math.floor((wave - 1) / 5);
+
+    const bossHPConfig = {
+      1: { waveMin: 4000, waveMax: 6000, mainBoss: 8000, maxWave: 5 },
+      2: { waveMin: 6000, waveMax: 16000, mainBoss: 25000, maxWave: 7 },
+      3: { waveMin: 8000, waveMax: 25000, mainBoss: 40000, maxWave: 8 },
+      4: { waveMin: 10000, waveMax: 45000, mainBoss: 70000, maxWave: 9 },
+      5: { waveMin: 12000, waveMax: 70000, mainBoss: 100000, maxWave: 10 },
+      6: { waveMin: 14000, waveMax: 100000, mainBoss: 150000, maxWave: 10 },
+      7: { waveMin: 16000, waveMax: 125000, mainBoss: 200000, maxWave: 11 },
+      8: { waveMin: 16000, waveMax: 150000, mainBoss: 250000, maxWave: 12 },
+      9: { waveMin: 18000, waveMax: 150000, mainBoss: 300000, maxWave: 13 },
+      10: { waveMin: 20000, waveMax: 200000, mainBoss: 500000, maxWave: 15 }
+    };
+
+    const BOSS_SPECIALS = {
+      1: { homing: false, maxShields: 0, laser: false },
+      2: { homing: true,  maxShields: 0, laser: false },
+      3: { homing: true,  maxShields: 0, laser: false },
+      4: { homing: false, maxShields: 5, laser: false },
+      5: { homing: false, maxShields: 5, laser: false },
+      6: { homing: false, maxShields: 0, laser: true  },
+      7: { homing: false, maxShields: 0, laser: true  },
+      8: { homing: true,  maxShields: 3, laser: false },
+      9: { homing: true,  maxShields: 0, laser: true  },
+      10:{ homing: true,  maxShields: 3, laser: true  }
+    };
+
     if (this.isLevelBoss) {
       this.width = 400;
       this.height = 350;
-      this.hp = 5000 + (wave * 2000); // 'wave' will be passed as the level number
+      const config = bossHPConfig[this.level] || { mainBoss: 10000 };
+      this.hp = config.mainBoss;
       this.speed = 60;
       this.color = '#ffcc00'; // Gold
       this.shootCooldown = 500; // Balanced delay for dodging
+
+      // Special Boss Attack States
+      const spec = BOSS_SPECIALS[this.level] || { homing: false, maxShields: 0, laser: false };
+      this.hasHoming = spec.homing;
+      this.maxShields = spec.maxShields;
+      this.hasLaser = spec.laser;
+
+      this.shieldActive = false;
+      this.shieldTimer = 0;
+      this.shieldsLeft = spec.maxShields;
+      this.nextShieldCooldown = 6.0 + Math.random() * 4.0; // first shield after 6-10s
+
+      this.laserActive = false;
+      this.laserTimer = 0;
+      this.laserStage = 'off'; // 'off', 'warning', 'firing'
+      this.nextLaserCooldown = 4.0 + Math.random() * 3.0; // first laser after 4-7s
+      this.laserDuration = 2.5;
+      this.laserWarningDuration = 1.0;
     } else if (this.isBoss) {
       this.width = 280;
       this.height = 280;
-      this.hp = 1500 + (wave * 500);
+      const config = bossHPConfig[this.level] || { waveMin: 2000, waveMax: 4000, maxWave: 5 };
+      const maxW = config.maxWave;
+      this.hp = config.waveMin + Math.round((wave - 1) * (config.waveMax - config.waveMin) / (maxW - 1 || 1));
       this.speed = 100;
       this.color = '#ff0055'; // neon red
       this.shootCooldown = Math.max(200, 800 - (wave * 60));
     } else {
       this.width = 120;
       this.height = 120;
-      const tier = level + Math.floor((wave - 1) / 5);
-      const tierBase = tier * 100;
+      this.hp = tier * 100;
       const subWave = ((wave - 1) % 5) + 1;
       if (subWave <= 2) {
-        this.hp = tierBase;
+        // base hp already set
       } else if (subWave <= 4) {
-        this.hp = tierBase + 50;
+        this.hp += 50;
       } else {
-        this.hp = tierBase + 100;
+        this.hp += 100;
       }
       this.speed = 100 + (wave * 10);
       this.color = '#c5c6c7'; // grey/white
@@ -192,8 +228,56 @@ export class Enemy {
   }
 
   update(dt) {
+    if (this.isFrozen) {
+      if (typeof this.freezeTimer === 'undefined') this.freezeTimer = 4.0;
+      this.freezeTimer -= dt;
+      if (this.freezeTimer <= 0) {
+        this.isFrozen = false;
+      }
+      return; // Skip updates (movement/shooting) when frozen
+    }
+
     this.x += this.vx * dt;
     this.y += this.vy * dt;
+
+    if (this.isLevelBoss) {
+      // 1. Update Shield State
+      if (this.shieldActive) {
+        this.shieldTimer -= dt;
+        if (this.shieldTimer <= 0) {
+          this.shieldActive = false;
+          this.nextShieldCooldown = 12.0 + Math.random() * 4.0; // 12-16s between shields
+        }
+      } else if (this.shieldsLeft > 0) {
+        this.nextShieldCooldown -= dt;
+        if (this.nextShieldCooldown <= 0) {
+          this.shieldActive = true;
+          this.shieldTimer = 3.5;
+          this.shieldsLeft--;
+        }
+      }
+
+      // 2. Update Laser State
+      if (this.laserStage === 'warning') {
+        this.laserTimer -= dt;
+        if (this.laserTimer <= 0) {
+          this.laserStage = 'firing';
+          this.laserTimer = this.laserDuration;
+        }
+      } else if (this.laserStage === 'firing') {
+        this.laserTimer -= dt;
+        if (this.laserTimer <= 0) {
+          this.laserStage = 'off';
+          this.nextLaserCooldown = 8.0 + Math.random() * 3.0; // 8-11s between lasers
+        }
+      } else if (this.hasLaser) {
+        this.nextLaserCooldown -= dt;
+        if (this.nextLaserCooldown <= 0) {
+          this.laserStage = 'warning';
+          this.laserTimer = this.laserWarningDuration;
+        }
+      }
+    }
 
     if (this.isLevelBoss || this.isBoss) {
       if (this.x < this.width / 2 || this.x > this.canvas.width - this.width / 2) {
@@ -266,6 +350,82 @@ export class Enemy {
     ctx.fillStyle = '#00ff00';
     ctx.fillRect(-this.width / 2, -this.height / 2 - 15, this.width * Math.max(0, this.hp / this.maxHp), 5);
 
+    if (this.isFrozen) {
+      ctx.save();
+      ctx.fillStyle = 'rgba(0, 229, 255, 0.25)';
+      ctx.strokeStyle = '#00e5ff';
+      ctx.lineWidth = 3;
+      ctx.shadowBlur = 15;
+      ctx.shadowColor = '#00e5ff';
+      ctx.fillRect(-this.width / 2, -this.height / 2, this.width, this.height);
+      ctx.strokeRect(-this.width / 2, -this.height / 2, this.width, this.height);
+      ctx.restore();
+    }
+
+    // Draw Boss Special Attacks
+    if (this.isLevelBoss) {
+      // Shield effect
+      if (this.shieldActive) {
+        ctx.save();
+        ctx.strokeStyle = '#00e5ff';
+        ctx.lineWidth = 4;
+        ctx.shadowBlur = 25;
+        ctx.shadowColor = '#00e5ff';
+        ctx.fillStyle = 'rgba(0, 229, 255, 0.05)';
+        ctx.beginPath();
+        ctx.arc(0, 0, 230 + Math.sin(performance.now() / 150) * 10, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      // Shield remaining dots
+      if (this.maxShields > 0) {
+        ctx.save();
+        const total = this.maxShields;
+        const active = this.shieldsLeft + (this.shieldActive ? 1 : 0);
+        for (let i = 0; i < total; i++) {
+          ctx.beginPath();
+          ctx.arc(-30 + i * 15, -this.height / 2 - 25, 4, 0, Math.PI * 2);
+          ctx.fillStyle = i < active ? '#00e5ff' : '#333';
+          ctx.shadowBlur = i < active ? 8 : 0;
+          ctx.shadowColor = '#00e5ff';
+          ctx.fill();
+        }
+        ctx.restore();
+      }
+
+      // Laser beams
+      if (this.laserStage === 'warning') {
+        ctx.save();
+        ctx.strokeStyle = 'rgba(255, 0, 50, 0.5)';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([5, 5]);
+        const laserOffsets = [-120, 120];
+        laserOffsets.forEach(offset => {
+          ctx.beginPath();
+          ctx.moveTo(offset, 100);
+          ctx.lineTo(offset, 1500);
+          ctx.stroke();
+        });
+        ctx.restore();
+      } else if (this.laserStage === 'firing') {
+        ctx.save();
+        const laserWidth = 45;
+        const laserOffsets = [-120, 120];
+        laserOffsets.forEach(offset => {
+          ctx.fillStyle = 'rgba(255, 0, 50, 0.3)';
+          ctx.shadowBlur = 20;
+          ctx.shadowColor = '#ff0033';
+          ctx.fillRect(offset - laserWidth / 2, 100, laserWidth, 1500);
+          ctx.fillStyle = '#ffffff';
+          ctx.shadowBlur = 0;
+          ctx.fillRect(offset - laserWidth / 4, 100, laserWidth / 2, 1500);
+        });
+        ctx.restore();
+      }
+    }
+
     ctx.restore();
   }
 
@@ -276,6 +436,10 @@ export class Enemy {
       w: this.width,
       h: this.height
     }
+  }
+
+  get isShieldActive() {
+    return this.shieldActive || false;
   }
 }
 
@@ -445,15 +609,15 @@ export class Missile {
     this.age = 0;
   }
 
-  update(dt) {
+  update(dt, decoy = null) {
     this.age += dt;
     // Trail
     this.trail.push({ x: this.x, y: this.y, age: 0 });
     this.trail.forEach(t => t.age += dt);
     if (this.trail.length > 12) this.trail.shift();
 
-    // Home toward player
-    const target = this.targetRef;
+    // Home toward player or decoy
+    const target = decoy || this.targetRef;
     if (target && target.hp > 0) {
       const dx = target.x - this.x;
       const dy = target.y - this.y;

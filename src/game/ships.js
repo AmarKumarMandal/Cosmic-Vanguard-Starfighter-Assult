@@ -199,7 +199,7 @@ export const SHIPS = [
     cost: 75000,
     weaponStyle: 'red-spread',
     stats: { power: 90, attack: 40, defense: 100, speed: 40 },
-    engineSpecs: { rawHp: 500, rawSpeed: 400, fireRate: 200, damage: 40 },
+    engineSpecs: { rawHp: 300, rawSpeed: 400, fireRate: 200, damage: 40 },
     draw: function(ctx, width, height, color) {
       if (!this._img) { this._img = new Image(); this._img.src = '/player craftship/Z-51 gen 1.png'; }
       if (this._img.complete && this._img.naturalWidth > 0) {
@@ -250,7 +250,7 @@ export const SHIPS = [
     cost: 250000,
     weaponStyle: 'red-spread',
     stats: { power: 130, attack: 50, defense: 60, speed: 90 },
-    engineSpecs: { rawHp: 360, rawSpeed: 720, fireRate: 130, damage: 60 },
+    engineSpecs: { rawHp: 400, rawSpeed: 720, fireRate: 130, damage: 60 },
     draw: function(ctx, width, height, color) {
       if (!this._img) { 
         this._img = new Image(); 
@@ -304,7 +304,7 @@ export const SHIPS = [
     cost: 500000,
     weaponStyle: 'red-spread',
     stats: { power: 190, attack: 70, defense: 160, speed: 45 },
-    engineSpecs: { rawHp: 900, rawSpeed: 460, fireRate: 250, damage: 80 },
+    engineSpecs: { rawHp: 500, rawSpeed: 460, fireRate: 250, damage: 90 },
     draw: function(ctx, width, height, color) {
       if (!this._img) { this._img = new Image(); this._img.src = '/player craftship/Z-51 gen 2.png'; }
       if (this._img.complete && this._img.naturalWidth > 0) {
@@ -355,7 +355,7 @@ export const SHIPS = [
     cost: 1200000,
     weaponStyle: 'red-spread',
     stats: { power: 220, attack: 80, defense: 140, speed: 80 },
-    engineSpecs: { rawHp: 800, rawSpeed: 650, fireRate: 120, damage: 90 },
+    engineSpecs: { rawHp: 600, rawSpeed: 650, fireRate: 120, damage: 100 },
     draw: function(ctx, width, height, color) {
       if (!this._img) { this._img = new Image(); this._img.src = '/player craftship/Spectre.png'; }
       if (this._img.complete && this._img.naturalWidth > 0) {
@@ -429,7 +429,7 @@ export const SHIPS = [
     cost: 850000,
     weaponStyle: 'red-spread',
     stats: { power: 240, attack: 90, defense: 100, speed: 85 },
-    engineSpecs: { rawHp: 640, rawSpeed: 700, fireRate: 115, damage: 100 },
+    engineSpecs: { rawHp: 700, rawSpeed: 700, fireRate: 115, damage: 120 },
     draw: function(ctx, width, height, color) {
       if (!this._img) { this._img = new Image(); this._img.src = '/player craftship/Ghost.png'; }
       if (this._img.complete && this._img.naturalWidth > 0) {
@@ -480,7 +480,7 @@ export const SHIPS = [
     cost: 2000000,
     weaponStyle: 'red-spread',
     stats: { power: 290, attack: 100, defense: 120, speed: 95 },
-    engineSpecs: { rawHp: 760, rawSpeed: 780, fireRate: 90, damage: 110 },
+    engineSpecs: { rawHp: 800, rawSpeed: 780, fireRate: 90, damage: 130 },
     draw: function(ctx, width, height, color) {
       if (!this._img) { this._img = new Image(); this._img.src = '/player craftship/Apex.png'; }
       if (this._img.complete && this._img.naturalWidth > 0) {
@@ -554,7 +554,7 @@ export const SHIPS = [
     cost: 1800000,
     weaponStyle: 'red-spread',
     stats: { power: 260, attack: 120, defense: 100, speed: 110 },
-    engineSpecs: { rawHp: 700, rawSpeed: 820, fireRate: 100, damage: 130 },
+    engineSpecs: { rawHp: 900, rawSpeed: 820, fireRate: 100, damage: 140 },
     draw: function(ctx, width, height, color) {
       if (!this._img) { this._img = new Image(); this._img.src = '/player craftship/Shadow Stealth-Spectre.png'; }
       if (this._img.complete && this._img.naturalWidth > 0) {
@@ -627,7 +627,7 @@ export const SHIPS = [
     cost: 650000,
     weaponStyle: 'red-spread',
     stats: { power: 150, attack: 110, defense: 110, speed: 70 },
-    engineSpecs: { rawHp: 580, rawSpeed: 550, fireRate: 150, damage: 120 },
+    engineSpecs: { rawHp: 1000, rawSpeed: 550, fireRate: 150, damage: 150 },
     draw: function(ctx, width, height, color) {
       if (!this._img) { this._img = new Image(); this._img.src = '/player craftship/Gold_Eagle.png'; }
       if (this._img.complete && this._img.naturalWidth > 0) {
@@ -678,7 +678,7 @@ export const SHIPS = [
     cost: 750000,
     weaponStyle: 'red-spread',
     stats: { power: 175, attack: 200, defense: 120, speed: 65 },
-    engineSpecs: { rawHp: 650, rawSpeed: 520, fireRate: 170, damage: 200 },
+    engineSpecs: { rawHp: 1200, rawSpeed: 520, fireRate: 170, damage: 180 },
     draw: function(ctx, width, height, color) {
       if (!this._img) { this._img = new Image(); this._img.src = '/player craftship/Reaper.png'; }
       if (this._img.complete && this._img.naturalWidth > 0) {
@@ -729,7 +729,7 @@ export const SHIPS = [
     cost: 2500000,
     weaponStyle: 'red-spread',
     stats: { power: 300, attack: 200, defense: 200, speed: 50 },
-    engineSpecs: { rawHp: 1200, rawSpeed: 510, fireRate: 180, damage: 200 },
+    engineSpecs: { rawHp: 1350, rawSpeed: 510, fireRate: 180, damage: 180 },
     draw: function(ctx, width, height, color) {
       if (!this._img) { this._img = new Image(); this._img.src = '/player craftship/Phantom 7.png'; }
       if (this._img.complete && this._img.naturalWidth > 0) {
