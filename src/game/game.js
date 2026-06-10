@@ -6,19 +6,13 @@ export class Game {
     this.ctx = this.canvas.getContext('2d');
     this.shipConfig = shipConfig;
     
-    // Resize handling
-    this.resize = () => {
-      const isPortrait = window.innerHeight > window.innerWidth;
-      if (isPortrait) {
-        this.canvas.width = window.innerHeight;
-        this.canvas.height = window.innerWidth;
-      } else {
-        this.canvas.width = window.innerWidth;
-        this.canvas.height = window.innerHeight;
-      }
-    };
+    // Fixed Virtual Canvas Resolution
+    this.canvas.width = 1600;
+    this.canvas.height = 900;
+    
+    // Resize handler (buffer remains 1600x900, layout stretched by CSS)
+    this.resize = () => {};
     window.addEventListener('resize', this.resize);
-    this.resize();
 
     // Input state
     this.input = {
@@ -48,19 +42,26 @@ export class Game {
 
     const getTouchTarget = (e) => {
       const touch = e.touches[0];
+      const rect = this.canvas.getBoundingClientRect();
       const isPortrait = window.innerHeight > window.innerWidth;
+      
+      const clientX = touch.clientX - rect.left;
+      const clientY = touch.clientY - rect.top;
+
       if (isPortrait) {
         // Rotated 90deg clockwise mapping:
         // localX = clientY
-        // localY = window.innerWidth - clientX
+        // localY = rect.width - clientX
+        const localX = clientY;
+        const localY = rect.width - clientX;
         return {
-          x: touch.clientY,
-          y: window.innerWidth - touch.clientX
+          x: (localX / rect.height) * 1600,
+          y: (localY / rect.width) * 900
         };
       } else {
         return {
-          x: touch.clientX,
-          y: touch.clientY
+          x: (clientX / rect.width) * 1600,
+          y: (clientY / rect.height) * 900
         };
       }
     };
