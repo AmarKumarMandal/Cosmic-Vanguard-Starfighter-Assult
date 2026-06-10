@@ -8,8 +8,14 @@ export class Game {
     
     // Resize handling
     this.resize = () => {
-      this.canvas.width = window.innerWidth;
-      this.canvas.height = window.innerHeight;
+      const isPortrait = window.innerHeight > window.innerWidth;
+      if (isPortrait) {
+        this.canvas.width = window.innerHeight;
+        this.canvas.height = window.innerWidth;
+      } else {
+        this.canvas.width = window.innerWidth;
+        this.canvas.height = window.innerHeight;
+      }
     };
     window.addEventListener('resize', this.resize);
     this.resize();
@@ -40,13 +46,32 @@ export class Game {
       }
     });
 
+    const getTouchTarget = (e) => {
+      const touch = e.touches[0];
+      const isPortrait = window.innerHeight > window.innerWidth;
+      if (isPortrait) {
+        // Rotated 90deg clockwise mapping:
+        // localX = clientY
+        // localY = window.innerWidth - clientX
+        return {
+          x: touch.clientY,
+          y: window.innerWidth - touch.clientX
+        };
+      } else {
+        return {
+          x: touch.clientX,
+          y: touch.clientY
+        };
+      }
+    };
+
     // Touch support mapping for mobile
     this.canvas.addEventListener('touchstart', e => {
-      this.input.touchTarget = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+      this.input.touchTarget = getTouchTarget(e);
     });
     this.canvas.addEventListener('touchmove', e => {
       e.preventDefault();
-      this.input.touchTarget = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+      this.input.touchTarget = getTouchTarget(e);
     }, {passive: false});
     window.addEventListener('touchend', e => {
       this.input.touchTarget = null;

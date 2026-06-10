@@ -819,10 +819,23 @@ body, html {
 /* Default state hiding/showing based on orientation */
 @media (orientation: portrait) {
   .rotate-device-overlay {
-    display: flex;
+    display: none !important;
+  }
+  .game-wrapper {
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    position: relative;
   }
   .game-container {
-    display: none !important;
+    width: 100vh !important;
+    height: 100vw !important;
+    transform: rotate(90deg);
+    transform-origin: top left;
+    position: absolute;
+    top: 0;
+    left: 100%;
+    overflow: hidden;
   }
 }
 
