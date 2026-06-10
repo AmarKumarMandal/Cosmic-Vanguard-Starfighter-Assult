@@ -6,10 +6,14 @@ Welcome to **Space War**, an action-packed 2D top-down space arcade shooter buil
 
 ## 🌌 Key Features
 
-* **Dynamic Hangar UI**: Upgraded 3x4 ship grid layout featuring responsive, high-definition starship cards.
-* **11 Unique Playable Ships**: Choose from basic scout ships to heavy prototype dreadnoughts, each with specialized stats, custom weapons, and levels.
+* **Universal Viewport Responsiveness**: Fully scalable layouts that adapt to laptops, desktops, tablets, iPads, and mobile devices.
+* **Landscape Orientation warning Overlay**: Displays a beautiful full-screen rotation warning overlay in portrait mode, auto-hiding when held horizontally.
+* **Split Touch Screen Controllers**: Two-handed D-pads (Left/Down on the left; Up/Right on the right) and flanking active ability buttons positioned for thumb reaches, optimized to automatically hide on mouse-based desktops.
+* **Programmatic Screen Lock**: Safely locks the viewport orientation to landscape using HTML5 fullscreen and Screen Orientation APIs when launching a game on touch devices.
+* **Dynamic Hangar UI**: High-definition, scrollable hangar cards scaling down dynamically on lower-height monitors and mobile phones.
+* **12 Unique Playable Ships**: Choose from basic scout ships to heavy prototype dreadnoughts, each with specialized stats, custom weapons, and levels.
 * **Procedural Engine Flame Rendering**: Dynamic canvas-based rocket thruster flames that flicker organically in real-time, custom-aligned to match each starship's design and colors.
-* **Smooth 2D Canvas Controls**: Move, fire, and dodge enemy projectiles with high frame rate rendering and responsive keyboard/touch control handling.
+* **Smooth 2D Canvas Controls**: High frame rate rendering with responsive keyboard, mouse, and touch event handling.
 
 ---
 
@@ -33,10 +37,15 @@ Here is the current lineup of starfighters available in the Hangar:
 
 ## 🎮 How to Play
 
-### 🎹 Keyboard Controls
+### 🎹 Keyboard Controls (Desktops & Laptops)
 * **Move Left/Right/Up/Down**: `A`, `S`, `D`, `W` or `Arrow Keys`
-* **Shoot**: Automatic firing while playing
-* **Hangar Selection**: Mouse-click to inspect, purchase, and deploy starships in the hangar selection grid.
+* **Activate Ability**: `Spacebar`, `Shift`, `F`, or `E` key
+* **Pause / Menu**: `Escape` key
+
+### 📱 Touch Controls (Mobiles & Tablets)
+* **Move Aircraft**: Use the split glassmorphic D-pad controls on the left and right edges.
+* **Activate Ability**: Tap the flanking ability buttons matching your craft's special weapon.
+* **Play Area**: Touch and drag anywhere on the canvas if you prefer direct tracking movement.
 
 ---
 
