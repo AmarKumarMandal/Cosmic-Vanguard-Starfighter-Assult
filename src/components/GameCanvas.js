@@ -174,7 +174,31 @@ export default function GameCanvas() {
     }
   }, [gameState]);
 
+  const lockLandscape = () => {
+    const isTouchDevice = typeof window !== 'undefined' && 
+      (window.matchMedia('(pointer: coarse)').matches || 'ontouchstart' in window);
+
+    if (!isTouchDevice) return;
+
+    try {
+      const docEl = document.documentElement;
+      const requestFS = docEl.requestFullscreen || docEl.webkitRequestFullscreen || docEl.mozRequestFullScreen || docEl.msRequestFullscreen;
+      if (requestFS) {
+        requestFS.call(docEl).catch(() => {});
+      }
+
+      if (screen.orientation && screen.orientation.lock) {
+        screen.orientation.lock('landscape').catch(err => {
+          console.warn('Screen orientation lock failed:', err);
+        });
+      }
+    } catch (e) {
+      console.warn('Screen orientation lock error:', e);
+    }
+  };
+
   const startGame = (level = 1) => {
+    lockLandscape();
     bankSessionMoney();
     setGameState('playing');
     if (gameRef.current) {
@@ -183,6 +207,7 @@ export default function GameCanvas() {
   };
 
   const continueGame = () => {
+    lockLandscape();
     setGameState('playing');
     if (gameRef.current) gameRef.current.resume();
   };
@@ -190,6 +215,7 @@ export default function GameCanvas() {
   const loadGame = () => {
     const data = localStorage.getItem('spaceWarSaveData');
     if (data && gameRef.current) {
+      lockLandscape();
       gameRef.current.startFromLoad(data);
       setGameState('playing');
     }
@@ -225,8 +251,16 @@ export default function GameCanvas() {
   };
 
   return (
-    <div className="game-container">
-      <canvas ref={canvasRef} id="game-canvas" />
+    <div className="game-wrapper">
+      {/* Landscape orientation requirement overlay for mobile/tablet devices */}
+      <div className="rotate-device-overlay">
+        <div className="rotate-icon">🔄</div>
+        <h2>Rotate Your Device</h2>
+        <p>Please rotate your device to horizontal (landscape) orientation to join the space battle.</p>
+      </div>
+
+      <div className="game-container">
+        <canvas ref={canvasRef} id="game-canvas" />
       
       {gameState === 'menu' && !showLevelSelect && (
         <div id="main-menu" className="ui-overlay">
@@ -326,19 +360,7 @@ export default function GameCanvas() {
           
           {/* On-screen Directional Controls (Split Left and Right) */}
           {/* Left Controls: Left (◀) and Down (▼) */}
-          <div className="dpad-container dpad-left" style={{
-            position: 'absolute',
-            bottom: '40px',
-            left: '40px',
-            width: '150px',
-            height: '150px',
-            display: 'grid',
-            gridTemplateColumns: 'repeat(3, 1fr)',
-            gridTemplateRows: 'repeat(3, 1fr)',
-            gap: '8px',
-            zIndex: 100,
-            pointerEvents: 'auto'
-          }}>
+          <div className="dpad-container dpad-left">
             <div></div><div></div><div></div>
             
             <button 
@@ -384,19 +406,7 @@ export default function GameCanvas() {
           )}
 
           {/* Right Controls: Up (▲) and Right (▶) */}
-          <div className="dpad-container dpad-right" style={{
-            position: 'absolute',
-            bottom: '40px',
-            right: '40px',
-            width: '150px',
-            height: '150px',
-            display: 'grid',
-            gridTemplateColumns: 'repeat(3, 1fr)',
-            gridTemplateRows: 'repeat(3, 1fr)',
-            gap: '8px',
-            zIndex: 100,
-            pointerEvents: 'auto'
-          }}>
+          <div className="dpad-container dpad-right">
             <div></div>
             <button 
               className="dpad-btn"
@@ -490,6 +500,7 @@ export default function GameCanvas() {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }

@@ -444,7 +444,7 @@ export default function Hangar({ globalMoney, setGlobalMoney, unlockedShips, set
         </div>
 
         {/* Right Sidebar */}
-        <div style={{position: 'relative', width: '350px'}}>
+        <div className="hangar-sidebar-right">
            <div className="hangar-title">
              <h2>{selectedShip.name}</h2>
              <div className="subtitle">{selectedShip.type}</div>
