@@ -839,161 +839,181 @@ body, html {
   }
 }
 
-/* General responsive viewport overrides for small landscape screens (mobile, mini tablets) */
-@media (max-height: 600px) {
-  /* Hangar Responsive Scaling */
-  .hangar-layout {
-    padding: 1rem;
-  }
+/* Responsive Hangar layout for tablet and mobile devices (screen width < 1024px) */
+@media (max-width: 1024px) {
   .hangar-content {
-    margin-top: 0.75rem;
-  }
-  .hangar-sidebar-left {
-    grid-template-rows: repeat(3, 1fr) !important;
-    width: auto !important;
-    max-height: 75vh;
-    overflow-y: auto;
-    padding-right: 10px;
-    gap: 8px !important;
-  }
-  .ship-thumbnail {
-    width: 90px !important;
-    height: 90px !important;
-  }
-  .hangar-center canvas {
-    max-width: 260px;
-  }
-  .hangar-sidebar-right {
-    width: 250px !important;
-  }
-  .hangar-title {
-    margin-bottom: 10px !important;
-  }
-  .hangar-title h2 {
-    font-size: 1.6rem !important;
-  }
-  .hangar-title .subtitle {
-    font-size: 0.9rem !important;
-  }
-  .hangar-title .level {
-    font-size: 0.85rem !important;
-  }
-  .hangar-stats {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    grid-template-rows: auto auto !important;
+    grid-template-areas:
+      "center right"
+      "left left" !important;
+    gap: 15px !important;
     width: 100% !important;
-    margin-top: 10px !important;
+    height: calc(100% - 70px) !important;
+    overflow-y: auto !important;
+    padding-bottom: 20px !important;
   }
-  .stat-row {
-    margin-bottom: 6px !important;
-  }
-  .stat-label {
-    width: 80px !important;
-    font-size: 0.8rem !important;
-  }
-  .stat-bar-bg {
-    height: 10px !important;
-  }
-  .stat-value {
-    font-size: 0.8rem !important;
-    width: 30px !important;
-  }
-  .hangar-ability-section {
-    margin-top: 10px !important;
+
+  .hangar-sidebar-left {
+    grid-area: left !important;
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    width: 100% !important;
+    height: auto !important;
+    max-height: 140px !important;
     padding: 10px !important;
     gap: 10px !important;
+    justify-content: flex-start !important;
+    background: rgba(0, 0, 0, 0.3) !important;
+    border-radius: 12px !important;
+    padding-right: 15px !important;
+  }
+
+  .ship-thumbnail {
+    width: 100px !important;
+    height: 100px !important;
+    flex-shrink: 0 !important;
+  }
+
+  .hangar-center {
+    grid-area: center !important;
+    width: 100% !important;
+    height: auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  .hangar-center canvas {
+    max-width: 240px !important;
+  }
+
+  .hangar-sidebar-right {
+    grid-area: right !important;
+    width: 100% !important;
+    height: auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  .hangar-stats {
+    width: 100% !important;
+  }
+}
+
+/* Extra scaling down for mobile phones and small viewports (width < 768px or height < 600px) */
+@media (max-width: 768px), (max-height: 600px) {
+  /* Scale down thumbnails in Hangar */
+  .ship-thumbnail {
+    width: 80px !important;
+    height: 80px !important;
+  }
+  .hangar-sidebar-left {
+    max-height: 110px !important;
+    padding: 6px !important;
+  }
+  .hangar-center canvas {
+    max-width: 185px !important;
+  }
+  
+  /* Scale down main menu overlay */
+  .glass-panel {
+    padding: 1.25rem 2rem !important;
+    border-radius: 12px !important;
+    max-width: 90vw !important;
+  }
+  .neon-text {
+    font-size: 2.2rem !important;
+    letter-spacing: 2px !important;
+  }
+  .menu-buttons {
+    gap: 6px !important;
+    max-width: 240px !important;
+  }
+  .glow-on-hover {
+    padding: 8px 20px !important;
+    font-size: 0.9rem !important;
+  }
+  .btn-secondary {
+    padding: 5px 15px !important;
+    font-size: 0.85rem !important;
+  }
+  .high-score-display, .glass-panel p {
+    font-size: 0.85rem !important;
+    margin-bottom: 0.5rem !important;
+  }
+  
+  /* Compact stats inside Hangar */
+  .hangar-title h2 {
+    font-size: 1.4rem !important;
+  }
+  .hangar-title .subtitle {
+    font-size: 0.8rem !important;
+  }
+  .hangar-stats .stat-row {
+    margin-bottom: 4px !important;
+  }
+  .hangar-stats .stat-label {
+    font-size: 0.75rem !important;
+    width: 70px !important;
+  }
+  .hangar-stats .stat-bar-bg {
+    height: 8px !important;
+  }
+  .hangar-stats .stat-value {
+    font-size: 0.75rem !important;
+  }
+  .hangar-ability-section {
+    margin-top: 8px !important;
+    padding: 8px !important;
   }
   .hangar-ability-section h3 {
-    font-size: 0.95rem !important;
+    font-size: 0.9rem !important;
   }
   .hangar-ability-section p {
-    font-size: 0.72rem !important;
+    font-size: 0.7rem !important;
   }
   .hangar-ability-illustration {
     display: none !important;
   }
-  .hangar-purchase {
-    bottom: 0.5rem !important;
-  }
   .btn-purchase {
-    font-size: 1.25rem !important;
-    padding: 8px 25px !important;
-  }
-
-  /* Main Menu / UI Panel Scaling */
-  .glass-panel {
-    padding: 1.5rem 2.5rem !important;
-    border-radius: 16px !important;
-  }
-  .neon-text {
-    font-size: 2.5rem !important;
-  }
-  .menu-buttons {
-    gap: 8px !important;
-    max-width: 260px !important;
-  }
-  .glow-on-hover {
-    padding: 8px 25px !important;
-    font-size: 1rem !important;
-  }
-  .btn-secondary {
+    font-size: 1.1rem !important;
     padding: 6px 20px !important;
-    font-size: 0.95rem !important;
-  }
-  .high-score-display, .glass-panel p {
-    font-size: 0.95rem !important;
-    margin-bottom: 0.8rem !important;
   }
 
-  /* Level Map node adjustments */
-  .level-node {
-    width: 44px !important;
-    height: 44px !important;
-  }
-  .node-ring {
-    width: 58px !important;
-    height: 58px !important;
-  }
-  .level-badge {
-    bottom: -20px !important;
-    padding: 1px 6px 1px 1px !important;
-  }
-  .level-badge-num {
-    width: 18px !important;
-    height: 18px !important;
-    font-size: 0.75rem !important;
-    margin-right: 4px !important;
-  }
-  .level-badge-stars {
-    font-size: 0.65rem !important;
-  }
-
-  /* Gameplay Controllers scaling */
+  /* Compact D-pads and controllers */
   .dpad-container {
-    width: 115px;
-    height: 115px;
-    gap: 5px;
+    width: 110px !important;
+    height: 110px !important;
+    gap: 4px !important;
   }
   .dpad-left {
-    bottom: 20px;
-    left: 20px;
+    bottom: 20px !important;
+    left: 20px !important;
   }
   .dpad-right {
-    bottom: 20px;
-    right: 20px;
+    bottom: 20px !important;
+    right: 20px !important;
   }
   .dpad-btn {
-    font-size: 1.1rem;
+    font-size: 1rem !important;
   }
   .ability-btn {
-    width: 56px;
-    height: 56px;
-    font-size: 0.58rem;
-    bottom: 48px;
+    width: 50px !important;
+    height: 50px !important;
+    font-size: 0.55rem !important;
+    bottom: 48px !important;
   }
   .ability-btn-left {
-    left: 150px;
+    left: 140px !important;
   }
   .ability-btn-right {
-    right: 150px;
+    right: 140px !important;
   }
 }
 
@@ -1003,4 +1023,5 @@ body, html {
     display: none !important;
   }
 }
+
 
