@@ -7,10 +7,11 @@ Welcome to **Space War**, an action-packed 2D top-down space arcade shooter buil
 ## 🌌 Key Features
 
 * **Universal Viewport Responsiveness**: Fully scalable layouts that adapt to laptops, desktops, tablets, iPads, and mobile devices.
+* **Fixed Virtual Resolution (1600x900)**: Coordinates, aircraft sizes, speeds, and gameplay physics are virtualized at a fixed 1600x900 resolution and scaled dynamically. This prevents player/enemy ships from looking oversized on compact viewports and keeps gameplay identical across all screens.
 * **Automatic Viewport Rotation in Portrait**: Automatically applies a 90-degree CSS rotation and maps touch coordinate translations on portrait devices to simulate landscape mode without forcing the user to physically rotate their screen.
 * **Split Touch Screen Controllers**: Two-handed D-pads (Left/Down on the left; Up/Right on the right) and flanking active ability buttons positioned for thumb reaches, optimized to automatically hide on mouse-based desktops.
 * **Programmatic Screen Lock**: Safely locks the viewport orientation to landscape using HTML5 fullscreen and Screen Orientation APIs when launching a game on touch devices.
-* **Dynamic Hangar UI**: High-definition, scrollable hangar cards scaling down dynamically on lower-height monitors and mobile phones.
+* **Dynamic Hangar UI**: High-definition, scrollable hangar cards scaling down dynamically via a CSS Grid reordering system with proportional layout rules to prevent overflows on mobile/tablet viewports.
 * **12 Unique Playable Ships**: Choose from basic scout ships to heavy prototype dreadnoughts, each with specialized stats, custom weapons, and levels.
 * **Procedural Engine Flame Rendering**: Dynamic canvas-based rocket thruster flames that flicker organically in real-time, custom-aligned to match each starship's design and colors.
 * **Smooth 2D Canvas Controls**: High frame rate rendering with responsive keyboard, mouse, and touch event handling.
