@@ -7,7 +7,7 @@ Welcome to **Space War**, an action-packed 2D top-down space arcade shooter buil
 ## 🌌 Key Features
 
 * **Universal Viewport Responsiveness**: Fully scalable layouts that adapt to laptops, desktops, tablets, iPads, and mobile devices.
-* **Landscape Orientation warning Overlay**: Displays a beautiful full-screen rotation warning overlay in portrait mode, auto-hiding when held horizontally.
+* **Automatic Viewport Rotation in Portrait**: Automatically applies a 90-degree CSS rotation and maps touch coordinate translations on portrait devices to simulate landscape mode without forcing the user to physically rotate their screen.
 * **Split Touch Screen Controllers**: Two-handed D-pads (Left/Down on the left; Up/Right on the right) and flanking active ability buttons positioned for thumb reaches, optimized to automatically hide on mouse-based desktops.
 * **Programmatic Screen Lock**: Safely locks the viewport orientation to landscape using HTML5 fullscreen and Screen Orientation APIs when launching a game on touch devices.
 * **Dynamic Hangar UI**: High-definition, scrollable hangar cards scaling down dynamically on lower-height monitors and mobile phones.
