@@ -92,14 +92,14 @@ export class Game {
 
     // Configure active ability based on ship theme and name
     const abilityMap = {
-      'starter': { id: 'drone-helper', name: 'Drone Helpers', cd: 12, dur: 10, color: '#66fcf1' },
+      'starter': { id: 'none', name: 'None', cd: 0, dur: 0, color: 'transparent' },
       'z-51-gen-1': { id: 'nano-blades', name: 'Nano-Blades', cd: 13, dur: 10, color: '#ffd700' },
       'ship-1': { id: 'cryo-shockwave', name: 'Cryo-Shockwave', cd: 10, dur: 6, color: '#00e5ff' },
       'z-51': { id: 'lightning-chain', name: 'Chain Lightning', cd: 10, dur: 0.5, color: '#e84545' },
       'spectre': { id: 'laser-beam', name: 'Plasma Laser', cd: 10, dur: 5, color: '#00ff00' },
       'ship-3': { id: 'phase-shift', name: 'Quantum Decoy', cd: 10, dur: 5, color: '#a020f0' },
       'apex': { id: 'chrono-slow', name: 'Chrono Warp', cd: 14, dur: 7, color: '#ff6600' },
-      'shadow-stealth-spectre': { id: 'none', name: 'None', cd: 0, dur: 0, color: 'transparent' },
+      'shadow-stealth-spectre': { id: 'drone-helper', name: 'Drone Helpers', cd: 12, dur: 10, color: '#7b2fff' },
       'gold-eagle': { id: 'deflector-shield', name: 'Mirror Shield', cd: 12, dur: 5, color: '#ffd700' },
       'reaper': { id: 'laser-beam', name: 'Plasma Laser', cd: 10, dur: 5, color: '#ff0033' },
       'ship-5': { id: 'drone-helper', name: 'Dual Drones', cd: 12, dur: 10, color: '#00ff00' },
@@ -529,6 +529,22 @@ export class Game {
         enemy.lastShotTime = time;
         const c = '#a020f0'; // Purple spread
 
+        // Scale enemy bullet damage dynamically based on current level
+        let smallDmg = 1;
+        let waveBossDmg = 5;
+        let levelBossDmg = 10;
+
+        const lvl = enemy.level || this.level || 1;
+        if (lvl >= 8) {
+          smallDmg = 5;
+          waveBossDmg = 10;
+          levelBossDmg = 20;
+        } else if (lvl >= 4) {
+          smallDmg = 3;
+          waveBossDmg = 8;
+          levelBossDmg = 15;
+        }
+
         if (enemy.isLevelBoss) {
           // 5-bullet downward V-spread (mirrors player's upward spread pattern)
           const angles = [-24, -12, 0, 12, 24];
@@ -539,7 +555,7 @@ export class Game {
             this.projectiles.push(new Projectile(
               enemy.x + offsets[i], enemy.y + 140,
               Math.cos(rad) * bossSpeed, Math.sin(rad) * bossSpeed,
-              true, c, 10, 'spread'
+              true, c, levelBossDmg, 'spread'
             ));
           }
           // Homing missile based on boss config
@@ -549,13 +565,13 @@ export class Game {
           }
         } else if (enemy.isBoss) {
           if (bulletCount === 2) {
-            this.projectiles.push(new Projectile(enemy.x - 30, enemy.y + 100, 0, 500, true, c, 5, 'spread'));
-            this.projectiles.push(new Projectile(enemy.x + 30, enemy.y + 100, 0, 500, true, c, 5, 'spread'));
+            this.projectiles.push(new Projectile(enemy.x - 30, enemy.y + 100, 0, 500, true, c, waveBossDmg, 'spread'));
+            this.projectiles.push(new Projectile(enemy.x + 30, enemy.y + 100, 0, 500, true, c, waveBossDmg, 'spread'));
           } else {
-            this.projectiles.push(new Projectile(enemy.x - 60, enemy.y + 100, 0, 500, true, c, 5, 'spread'));
-            this.projectiles.push(new Projectile(enemy.x - 20, enemy.y + 100, 0, 500, true, c, 5, 'spread'));
-            this.projectiles.push(new Projectile(enemy.x + 20, enemy.y + 100, 0, 500, true, c, 5, 'spread'));
-            this.projectiles.push(new Projectile(enemy.x + 60, enemy.y + 100, 0, 500, true, c, 5, 'spread'));
+            this.projectiles.push(new Projectile(enemy.x - 60, enemy.y + 100, 0, 500, true, c, waveBossDmg, 'spread'));
+            this.projectiles.push(new Projectile(enemy.x - 20, enemy.y + 100, 0, 500, true, c, waveBossDmg, 'spread'));
+            this.projectiles.push(new Projectile(enemy.x + 20, enemy.y + 100, 0, 500, true, c, waveBossDmg, 'spread'));
+            this.projectiles.push(new Projectile(enemy.x + 60, enemy.y + 100, 0, 500, true, c, waveBossDmg, 'spread'));
           }
         } else {
           // Small enemy troops
@@ -563,13 +579,13 @@ export class Game {
           const enemyBulletCount = this.wave <= 4 ? 2 : 4;
 
           if (enemyBulletCount === 2) {
-            this.projectiles.push(new Projectile(enemy.x - 15, enemy.y + 20, 0, speedY, true, c, 1, 'spread'));
-            this.projectiles.push(new Projectile(enemy.x + 15, enemy.y + 20, 0, speedY, true, c, 1, 'spread'));
+            this.projectiles.push(new Projectile(enemy.x - 15, enemy.y + 20, 0, speedY, true, c, smallDmg, 'spread'));
+            this.projectiles.push(new Projectile(enemy.x + 15, enemy.y + 20, 0, speedY, true, c, smallDmg, 'spread'));
           } else {
-            this.projectiles.push(new Projectile(enemy.x - 20, enemy.y + 20, 0, speedY, true, c, 1, 'spread'));
-            this.projectiles.push(new Projectile(enemy.x - 7,  enemy.y + 20, 0, speedY, true, c, 1, 'spread'));
-            this.projectiles.push(new Projectile(enemy.x + 7,  enemy.y + 20, 0, speedY, true, c, 1, 'spread'));
-            this.projectiles.push(new Projectile(enemy.x + 20, enemy.y + 20, 0, speedY, true, c, 1, 'spread'));
+            this.projectiles.push(new Projectile(enemy.x - 20, enemy.y + 20, 0, speedY, true, c, smallDmg, 'spread'));
+            this.projectiles.push(new Projectile(enemy.x - 7,  enemy.y + 20, 0, speedY, true, c, smallDmg, 'spread'));
+            this.projectiles.push(new Projectile(enemy.x + 7,  enemy.y + 20, 0, speedY, true, c, smallDmg, 'spread'));
+            this.projectiles.push(new Projectile(enemy.x + 20, enemy.y + 20, 0, speedY, true, c, smallDmg, 'spread'));
           }
         }
       }
@@ -613,8 +629,8 @@ export class Game {
       case 'drone-helper': {
         this.abilityState = {
           drones: [
-            { offset: { x: -45, y: 15 }, lastShot: 0, angle: 0 },
-            { offset: { x: 45, y: 15 }, lastShot: 0, angle: Math.PI }
+            { offset: { x: -80, y: 10 }, lastShot: 0, angle: 0 },
+            { offset: { x: 80, y: 10 }, lastShot: 0, angle: Math.PI }
           ]
         };
         break;
@@ -1050,27 +1066,51 @@ export class Game {
       case 'drone-helper': {
         if (!this.abilityState.drones) break;
         ctx.save();
+
+        if (!this.droneImage) {
+          this.droneImage = new Image();
+          this.droneImage.src = '/player craftship/Drone.png';
+        }
+
         this.abilityState.drones.forEach(drone => {
           const droneX = this.player.x + drone.offset.x;
           const droneY = this.player.y - drone.offset.y;
-          ctx.fillStyle = '#0b0c10';
-          ctx.strokeStyle = this.abilityColor;
-          ctx.lineWidth = 2;
-          ctx.shadowBlur = 10;
-          ctx.shadowColor = this.abilityColor;
-          ctx.beginPath();
-          ctx.arc(droneX, droneY, 12, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.stroke();
-          ctx.fillStyle = '#ffffff';
-          ctx.shadowBlur = 0;
-          ctx.beginPath();
-          ctx.arc(droneX, droneY, 4, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.fillStyle = '#ff0055';
-          ctx.beginPath();
-          ctx.arc(droneX, droneY + 12 + Math.random()*3, 3, 0, Math.PI * 2);
-          ctx.fill();
+
+          if (this.droneImage.complete && this.droneImage.naturalWidth > 0) {
+            // Draw a small thruster flame below the drone image
+            ctx.fillStyle = '#ff5500';
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = '#ff5500';
+            ctx.beginPath();
+            ctx.arc(droneX, droneY + 18 + Math.random() * 3, 4, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Reset shadows for the image
+            ctx.shadowBlur = 0;
+
+            // Draw the Drone image (40x40) centered at (droneX, droneY)
+            ctx.drawImage(this.droneImage, droneX - 20, droneY - 20, 40, 40);
+          } else {
+            // Fallback to original vector shapes if image is loading
+            ctx.fillStyle = '#0b0c10';
+            ctx.strokeStyle = this.abilityColor;
+            ctx.lineWidth = 2;
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = this.abilityColor;
+            ctx.beginPath();
+            ctx.arc(droneX, droneY, 12, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+            ctx.fillStyle = '#ffffff';
+            ctx.shadowBlur = 0;
+            ctx.beginPath();
+            ctx.arc(droneX, droneY, 4, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#ff0055';
+            ctx.beginPath();
+            ctx.arc(droneX, droneY + 12 + Math.random()*3, 3, 0, Math.PI * 2);
+            ctx.fill();
+          }
         });
         ctx.restore();
         break;

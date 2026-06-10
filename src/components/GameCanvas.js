@@ -6,14 +6,14 @@ import LevelMap from './LevelMap';
 import { SHIPS } from '@/game/ships';
 
 const abilityConfig = {
-  'starter': { name: 'Drones', color: '#66fcf1' },
+  'starter': { name: 'None', color: 'rgba(255, 255, 255, 0.2)' },
   'z-51-gen-1': { name: 'Blades', color: '#ffd700' },
   'ship-1': { name: 'Freeze', color: '#00e5ff' },
   'z-51': { name: 'Chain', color: '#e84545' },
   'spectre': { name: 'Laser', color: '#00ff00' },
   'ship-3': { name: 'Decoy', color: '#a020f0' },
   'apex': { name: 'Warp', color: '#ff6600' },
-  'shadow-stealth-spectre': { name: 'None', color: 'rgba(255, 255, 255, 0.2)' },
+  'shadow-stealth-spectre': { name: 'Drones', color: '#7b2fff' },
   'gold-eagle': { name: 'Shield', color: '#ffd700' },
   'reaper': { name: 'Solar', color: '#ff0033' },
   'ship-5': { name: 'Drones', color: '#00ff00' },

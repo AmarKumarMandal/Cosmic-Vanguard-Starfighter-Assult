@@ -4,9 +4,9 @@ import { SHIPS } from '@/game/ships';
 
 const HANGAR_ABILITY_INFO = {
   'starter': { 
-    id: 'drone-helper', 
-    name: 'Drone Helpers', 
-    description: 'Summons two micro-drones flanking your craft that automatically target and fire at nearby targets.' 
+    id: 'none', 
+    name: 'None', 
+    description: 'This starter craft does not have any active special power.' 
   },
   'z-51-gen-1': { 
     id: 'nano-blades', 
@@ -39,9 +39,9 @@ const HANGAR_ABILITY_INFO = {
     description: 'Slows down time for enemies and their bullets by 70% while you move and fire at normal speed.' 
   },
   'shadow-stealth-spectre': { 
-    id: 'none', 
-    name: 'None', 
-    description: 'This shadow assassin craft does not have any active special power.' 
+    id: 'drone-helper', 
+    name: 'Drone Helpers', 
+    description: 'Summons two micro-drones flanking your craft that automatically target and fire at nearby targets.' 
   },
   'gold-eagle': { 
     id: 'deflector-shield', 
@@ -455,7 +455,7 @@ export default function Hangar({ globalMoney, setGlobalMoney, unlockedShips, set
              <div className="stat-row">
                <div className="stat-label">POWER</div>
                <div className="stat-bar-bg">
-                 <div className="stat-bar-fill" style={{width: `${((selectedShip.engineSpecs.damage / 2) / 100) * 100}%`}}></div>
+                 <div className="stat-bar-fill" style={{width: `${((selectedShip.engineSpecs.damage / 2) / 150) * 100}%`}}></div>
                </div>
                <div className="stat-value">{selectedShip.engineSpecs.damage / 2}</div>
              </div>

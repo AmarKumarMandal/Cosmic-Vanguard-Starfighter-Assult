@@ -23,11 +23,11 @@ const getFlameColors = (color) => {
     inner = 'rgba(255, 120, 0, 0.8)';
     shadow = '#ff0000';
     innerShadow = '#ffaa00';
-  } else if (hex === '#a020f0' || hex === '#8a2be2' || hex === 'purple') {
-    outer = 'rgba(120, 0, 220, 0.6)';
-    inner = 'rgba(220, 0, 255, 0.8)';
-    shadow = '#a020f0';
-    innerShadow = '#ff00ff';
+  } else if (hex === '#a020f0' || hex === '#8a2be2' || hex === '#7b2fff' || hex === 'purple') {
+    outer = 'rgba(123, 47, 255, 0.6)';
+    inner = 'rgba(168, 85, 247, 0.9)';
+    shadow = '#7b2fff';
+    innerShadow = '#d8b4fe';
   } else if (hex === '#00ff00' || hex === '#00ff88' || hex === 'green') {
     outer = 'rgba(0, 220, 80, 0.6)';
     inner = 'rgba(100, 255, 100, 0.8)';
@@ -565,13 +565,13 @@ export const SHIPS = [
         ctx.save();
         const flameLengthOuter = height * 0.62 * flicker;
         const startYOuter = height * 0.35;
-        const flameWidthOuter = width * 0.14;
+        const flameWidthOuter = width * 0.12;
 
-        const drawOuterFlame = (xPosition) => {
+        const drawOuterFlame = (xPosition, lengthVal) => {
           ctx.beginPath();
           ctx.moveTo(xPosition - flameWidthOuter/2, startYOuter);
-          ctx.quadraticCurveTo(xPosition - flameWidthOuter/4, startYOuter + flameLengthOuter, xPosition, startYOuter + flameLengthOuter * 1.2);
-          ctx.quadraticCurveTo(xPosition + flameWidthOuter/4, startYOuter + flameLengthOuter, xPosition + flameWidthOuter/2, startYOuter);
+          ctx.quadraticCurveTo(xPosition - flameWidthOuter/4, startYOuter + lengthVal, xPosition, startYOuter + lengthVal * 1.2);
+          ctx.quadraticCurveTo(xPosition + flameWidthOuter/4, startYOuter + lengthVal, xPosition + flameWidthOuter/2, startYOuter);
           ctx.closePath();
           ctx.fillStyle = colors.outer;
           ctx.shadowBlur = 20;
@@ -579,8 +579,10 @@ export const SHIPS = [
           ctx.fill();
         };
 
-        drawOuterFlame(-width * 0.14);
-        drawOuterFlame(width * 0.125);
+        drawOuterFlame(-width * 0.33, flameLengthOuter);       // 1: Left Outer
+        drawOuterFlame(-width * 0.18, flameLengthOuter * 0.7); // 2: Left Inner (increased length slightly)
+        drawOuterFlame(width * 0.16, flameLengthOuter * 0.7);  // 4: Right Inner (increased length slightly)
+        drawOuterFlame(width * 0.31, flameLengthOuter);       // 3: Right Outer
         ctx.restore();
 
         // 2. Draw the ship image
@@ -589,14 +591,13 @@ export const SHIPS = [
         // 3. Draw the inner flames/cores ON TOP of the ship (emerging through the thrusters)
         ctx.save();
         const flameLengthInner = height * 0.19 * flicker;
-        const startYInner = height * 0.61;
-        const flameWidthInner = width * 0.08;
+        const flameWidthInner = width * 0.07;
 
-        const drawInnerFlame = (xPosition) => {
+        const drawInnerFlame = (xPosition, yStart, lengthVal) => {
           ctx.beginPath();
-          ctx.moveTo(xPosition - flameWidthInner/2, startYInner);
-          ctx.quadraticCurveTo(xPosition - flameWidthInner/4, startYInner + flameLengthInner, xPosition, startYInner + flameLengthInner * 1.2);
-          ctx.quadraticCurveTo(xPosition + flameWidthInner/4, startYInner + flameLengthInner, xPosition + flameWidthInner/2, startYInner);
+          ctx.moveTo(xPosition - flameWidthInner/2, yStart);
+          ctx.quadraticCurveTo(xPosition - flameWidthInner/4, yStart + lengthVal, xPosition, yStart + lengthVal * 1.2);
+          ctx.quadraticCurveTo(xPosition + flameWidthInner/4, yStart + lengthVal, xPosition + flameWidthInner/2, yStart);
           ctx.closePath();
           ctx.fillStyle = colors.inner;
           ctx.shadowBlur = 10;
@@ -605,15 +606,17 @@ export const SHIPS = [
 
           // White-hot core
           ctx.beginPath();
-          ctx.moveTo(xPosition - flameWidthInner/3, startYInner);
-          ctx.quadraticCurveTo(xPosition, startYInner + flameLengthInner * 0.6, xPosition + flameWidthInner/3, startYInner);
+          ctx.moveTo(xPosition - flameWidthInner/3, yStart);
+          ctx.quadraticCurveTo(xPosition, yStart + lengthVal * 0.6, xPosition + flameWidthInner/3, yStart);
           ctx.closePath();
           ctx.fillStyle = '#ffffff';
           ctx.fill();
         };
 
-        drawInnerFlame(-width * 0.14);
-        drawInnerFlame(width * 0.125);
+        drawInnerFlame(-width * 0.33, height * 0.35, flameLengthInner);       // 1: Left Outer
+        drawInnerFlame(-width * 0.18, height * 0.42, flameLengthInner * 0.7); // 2: Left Inner (increased length slightly)
+        drawInnerFlame(width * 0.16, height * 0.42, flameLengthInner * 0.7);  // 4: Right Inner (increased length slightly)
+        drawInnerFlame(width * 0.31, height * 0.35, flameLengthInner);       // 3: Right Outer (small flame adjusted right to 0.31)
         ctx.restore();
       }
     }
@@ -728,8 +731,8 @@ export const SHIPS = [
     color: '#00ff00',
     cost: 2500000,
     weaponStyle: 'red-spread',
-    stats: { power: 300, attack: 200, defense: 200, speed: 50 },
-    engineSpecs: { rawHp: 1350, rawSpeed: 510, fireRate: 180, damage: 180 },
+    stats: { power: 100, attack: 200, defense: 200, speed: 50 },
+    engineSpecs: { rawHp: 1350, rawSpeed: 510, fireRate: 180, damage: 200 },
     draw: function(ctx, width, height, color) {
       if (!this._img) { this._img = new Image(); this._img.src = '/player craftship/Phantom 7.png'; }
       if (this._img.complete && this._img.naturalWidth > 0) {
@@ -806,8 +809,8 @@ export const SHIPS = [
     color: '#ffffff',
     cost: 3000000,
     weaponStyle: 'red-spread',
-    stats: { power: 300, attack: 200, defense: 220, speed: 40 },
-    engineSpecs: { rawHp: 1500, rawSpeed: 450, fireRate: 200, damage: 200 },
+    stats: { power: 150, attack: 200, defense: 220, speed: 40 },
+    engineSpecs: { rawHp: 1500, rawSpeed: 450, fireRate: 200, damage: 300 },
     draw: function(ctx, width, height, color) {
       if (!this._img) { this._img = new Image(); this._img.src = '/player craftship/White_Titan_Vulcan.png'; }
       if (this._img.complete && this._img.naturalWidth > 0) {
