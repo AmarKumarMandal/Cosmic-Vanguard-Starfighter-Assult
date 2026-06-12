@@ -6,12 +6,26 @@ export class Game {
     this.ctx = this.canvas.getContext('2d');
     this.shipConfig = shipConfig;
     
-    // Fixed Virtual Canvas Resolution
-    this.canvas.width = 1600;
-    this.canvas.height = 900;
+    // Fixed Virtual Resolution setup (1600x900 coordinate space)
+    this.width = 1600;
+    this.height = 900;
+    this.virtualCanvas = {
+      width: this.width,
+      height: this.height,
+      getBoundingClientRect: () => this.canvas.getBoundingClientRect()
+    };
     
-    // Resize handler (buffer remains 1600x900, layout stretched by CSS)
-    this.resize = () => {};
+    // Resize handler (buffer matches physical resolution * devicePixelRatio for Retina/High-DPI sharpness)
+    this.resize = () => {
+      const rect = this.canvas.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      const targetWidth = rect.width || window.innerWidth || 1600;
+      const targetHeight = rect.height || window.innerHeight || 900;
+      
+      this.canvas.width = targetWidth * dpr;
+      this.canvas.height = targetHeight * dpr;
+    };
+    this.resize();
     window.addEventListener('resize', this.resize);
 
     // Input state
@@ -82,12 +96,12 @@ export class Game {
   }
 
   reset(level = 1) {
-    this.player = new Player(this.canvas, this.shipConfig);
+    this.player = new Player(this.virtualCanvas, this.shipConfig);
     this.enemies = [];
     this.projectiles = [];
     this.particles = [];
     this.missiles = [];
-    this.stars = Array.from({length: 100}, () => new Star(this.canvas));
+    this.stars = Array.from({length: 100}, () => new Star(this.virtualCanvas));
     
     this.level = level;
     this.wave = 1;
@@ -231,13 +245,13 @@ export class Game {
     this.isLevelBossActive = data.isLevelBossActive || false;
     
     // Restore player
-    this.player = new Player(this.canvas, this.shipConfig);
+    this.player = new Player(this.virtualCanvas, this.shipConfig);
     Object.assign(this.player, data.player);
 
     // Restore enemies
     this.enemies = data.enemies.map(edata => {
       // Pass wave=1 just for initialization, we overwrite everything anyway
-      const e = new Enemy(this.canvas, edata.x, edata.y, edata.isBoss, 1);
+      const e = new Enemy(this.virtualCanvas, edata.x, edata.y, edata.isBoss, 1);
       Object.assign(e, edata);
       return e;
     });
@@ -251,7 +265,7 @@ export class Game {
 
     // Clear and restore visual only elements
     this.particles = [];
-    this.stars = Array.from({length: 100}, () => new Star(this.canvas));
+    this.stars = Array.from({length: 100}, () => new Star(this.virtualCanvas));
     
     this.updateHUD();
   }
@@ -287,15 +301,15 @@ export class Game {
     // Spawn normal enemies
     if (this.enemiesSpawnedThisWave < totalEnemies && this.enemySpawnTimer > Math.max(0.5, 2.0 - (this.wave * 0.15))) {
       this.enemySpawnTimer = 0;
-      const x = Math.random() * (this.canvas.width - 80) + 40;
-      this.enemies.push(new Enemy(this.canvas, x, -50, false, this.wave, false, this.level));
+      const x = Math.random() * (this.width - 80) + 40;
+      this.enemies.push(new Enemy(this.virtualCanvas, x, -50, false, this.wave, false, this.level));
       this.enemiesSpawnedThisWave++;
     }
 
     // Boss appears when exactly 20 small enemies are left
     if (this.enemiesSpawnedThisWave === bossThreshold && !this.isBossSpawned) {
       this.isBossSpawned = true;
-      this.enemies.push(new Enemy(this.canvas, this.canvas.width/2, -100, true, this.wave, false, this.level));
+      this.enemies.push(new Enemy(this.virtualCanvas, this.width/2, -100, true, this.wave, false, this.level));
     }
   }
 
@@ -421,7 +435,7 @@ export class Game {
                     this.enemies = []; // wipe normal enemies
                     this.projectiles = []; // wipe normal projectiles
                     // Spawn Level Boss
-                    this.enemies.push(new Enemy(this.canvas, this.canvas.width/2, -150, false, this.level, true, this.level));
+                    this.enemies.push(new Enemy(this.virtualCanvas, this.width/2, -150, false, this.level, true, this.level));
                     this.player.hp = Math.min(this.player.maxHp, this.player.hp + 100); // big heal before boss
                     this.updateHUD();
                     return;
@@ -627,12 +641,38 @@ export class Game {
 
     switch (this.abilityType) {
       case 'lightning-chain': {
-        const targetEnemies = [...this.enemies].filter(e => e.hp > 0 && e.y > 0 && e.y < this.canvas.height);
+        // Build the chain of enemies starting from the player ship's center/weapon muzzle
+        const remaining = [...this.enemies].filter(e => e.hp > 0 && e.y > -50 && e.y < 950);
+        const targetChain = [];
+        let currentPoint = { x: this.player.x, y: this.player.y - 20 };
+        
+        while (remaining.length > 0) {
+          let closestIdx = -1;
+          let closestDist = Infinity;
+          for (let i = 0; i < remaining.length; i++) {
+            const dx = remaining[i].x - currentPoint.x;
+            const dy = remaining[i].y - currentPoint.y;
+            const dist = dx * dx + dy * dy;
+            if (dist < closestDist) {
+              closestDist = dist;
+              closestIdx = i;
+            }
+          }
+          if (closestIdx !== -1) {
+            const nextEnemy = remaining.splice(closestIdx, 1)[0];
+            targetChain.push(nextEnemy);
+            currentPoint = { x: nextEnemy.x, y: nextEnemy.y };
+          } else {
+            break;
+          }
+        }
+
         this.abilityState = {
-          targets: targetEnemies,
+          targets: targetChain,
           timer: 0.5
         };
-        targetEnemies.forEach(enemy => {
+
+        targetChain.forEach(enemy => {
           enemy.hp -= 300;
           this.createExplosion(enemy.x, enemy.y, this.abilityColor, 15);
           if (enemy.hp <= 0 && !enemy.isDead) {
@@ -669,8 +709,8 @@ export class Game {
       case 'gravity-singularity': {
         const startX = this.player.x;
         const startY = this.player.y - 30;
-        const targetX = this.canvas.width / 2;
-        const targetY = this.canvas.height / 2 - 100;
+        const targetX = this.width / 2;
+        const targetY = this.height / 2 - 100;
         this.abilityState = {
           stage: 'projectile',
           x: startX,
@@ -718,7 +758,7 @@ export class Game {
       case 'cryo-shockwave': {
         this.abilityState = {
           radius: 0,
-          maxRadius: Math.max(this.canvas.width, this.canvas.height),
+          maxRadius: Math.max(this.width, this.height),
           speed: 1500
         };
         this.enemies.forEach(enemy => {
@@ -731,7 +771,7 @@ export class Game {
       case 'solar-flare': {
         const strikes = [];
         for (let i = 0; i < 8; i++) {
-          const targetX = Math.random() * (this.canvas.width - 100) + 50;
+          const targetX = Math.random() * (this.width - 100) + 50;
           strikes.push({
             x: targetX,
             delay: 0.3 + i * 0.25,
@@ -808,7 +848,7 @@ export class Game {
             let nearestEnemy = null;
             let minDist = 99999;
             this.enemies.forEach(enemy => {
-              if (enemy.hp > 0 && enemy.y > 0 && enemy.y < this.canvas.height) {
+              if (enemy.hp > 0 && enemy.y > 0 && enemy.y < this.height) {
                 const dist = Math.hypot(enemy.x - (this.player.x + drone.offset.x), enemy.y - (this.player.y - drone.offset.y));
                 if (dist < minDist) {
                   minDist = dist;
@@ -1107,18 +1147,21 @@ export class Game {
           drawLightningLine(x1, y1, x2, y2, 45);
         };
 
-        // Draw lightning bolts branching from player ship directly to all targets simultaneously
+        // Draw lightning bolts chaining from player to targets in sequence (Chain topology)
+        let currentX = this.player.x;
+        let currentY = this.player.y - 20;
+
         targets.forEach(target => {
-          // Origin is player ship's center/weapon muzzle
-          const startX = this.player.x;
-          const startY = this.player.y - 20;
-          
-          drawBolt(startX, startY, target.x, target.y);
+          drawBolt(currentX, currentY, target.x, target.y);
           
           // Draw an additional parallel chaotic bolt for an intense electric display
           if (Math.random() < 0.5) {
-            drawBolt(startX, startY, target.x + (Math.random() - 0.5) * 25, target.y + (Math.random() - 0.5) * 25);
+            drawBolt(currentX, currentY, target.x + (Math.random() - 0.5) * 20, target.y + (Math.random() - 0.5) * 20);
           }
+
+          // Advance chain starting point to current target
+          currentX = target.x;
+          currentY = target.y;
         });
         
         ctx.restore();
@@ -1200,11 +1243,11 @@ export class Game {
       case 'chrono-slow': {
         ctx.save();
         ctx.fillStyle = 'rgba(0, 102, 255, 0.12)';
-        ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        ctx.fillRect(0, 0, this.width, this.height);
         ctx.strokeStyle = 'rgba(0, 229, 255, 0.3)';
         ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.arc(this.canvas.width/2, this.canvas.height/2, 100 + (Math.sin(performance.now() / 200) * 20), 0, Math.PI * 2);
+        ctx.arc(this.width/2, this.height/2, 100 + (Math.sin(performance.now() / 200) * 20), 0, Math.PI * 2);
         ctx.stroke();
         ctx.restore();
         break;
@@ -1359,9 +1402,9 @@ export class Game {
             const pulse = 10 + Math.sin(performance.now() / 50) * 5;
             ctx.beginPath();
             ctx.moveTo(x - pulse, 0);
-            ctx.lineTo(x - pulse, this.canvas.height);
+            ctx.lineTo(x - pulse, this.height);
             ctx.moveTo(x + pulse, 0);
-            ctx.lineTo(x + pulse, this.canvas.height);
+            ctx.lineTo(x + pulse, this.height);
             ctx.stroke();
           } else if (strike.strikeDuration > 0) {
             const width = 60 * (strike.strikeDuration / 0.4);
@@ -1374,7 +1417,7 @@ export class Game {
             ctx.fillStyle = grad;
             ctx.shadowBlur = 30;
             ctx.shadowColor = '#ff3300';
-            ctx.fillRect(strike.x - width/2, 0, width, this.canvas.height);
+            ctx.fillRect(strike.x - width/2, 0, width, this.height);
           }
         });
         ctx.restore();
@@ -1429,15 +1472,21 @@ export class Game {
       this.checkCollisions();
       this.checkMissileCollisions();
 
-      // Cleanup dead entities
-      this.enemies = this.enemies.filter(e => e.hp > 0 && e.y < this.canvas.height + 100);
-      this.projectiles = this.projectiles.filter(p => !p.markedForDeletion && p.y > -50 && p.y < this.canvas.height + 50 && p.x > -50 && p.x < this.canvas.width + 50);
+      // Cleanup dead entities using logical coordinates
+      this.enemies = this.enemies.filter(e => e.hp > 0 && e.y < this.height + 100);
+      this.projectiles = this.projectiles.filter(p => !p.markedForDeletion && p.y > -50 && p.y < this.height + 50 && p.x > -50 && p.x < this.width + 50);
       this.particles = this.particles.filter(p => p.life > 0);
-      this.missiles = this.missiles.filter(m => !m.markedForDeletion && m.y < this.canvas.height + 100);
+      this.missiles = this.missiles.filter(m => !m.markedForDeletion && m.y < this.height + 100);
 
-      // Draw
+      // Draw - First clear the entire physical canvas
       this.ctx.fillStyle = '#0b0c10';
       this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+      // Save context state and scale for logical drawing
+      this.ctx.save();
+      const scaleX = this.canvas.width / this.width;
+      const scaleY = this.canvas.height / this.height;
+      this.ctx.scale(scaleX, scaleY);
 
       this.stars.forEach(s => s.draw(this.ctx));
       this.particles.forEach(p => p.draw(this.ctx));
@@ -1448,6 +1497,9 @@ export class Game {
 
       // Draw ability visual effects on top
       this.drawAbility(this.ctx, dt);
+
+      // Restore drawing context state
+      this.ctx.restore();
 
     } catch (e) {
       console.error('Game Loop Error:', e);
