@@ -1022,8 +1022,18 @@ body, html {
 
 /* Hide on-screen mobile controllers on typical desktop monitors (mouse fine-pointing + larger screens) */
 @media (pointer: fine) and (min-width: 1025px) {
-  .dpad-container, .ability-btn {
+  .dpad-container {
     display: none !important;
+  }
+  /* Keep ability button visible but position it closer to the screen edges since D-pads are hidden */
+  .ability-btn {
+    bottom: 40px;
+  }
+  .ability-btn-left {
+    left: 40px;
+  }
+  .ability-btn-right {
+    right: 40px;
   }
 }
 
