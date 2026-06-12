@@ -380,9 +380,29 @@ function ShipDisplay({ ship }) {
 
 export default function Hangar({ globalMoney, setGlobalMoney, unlockedShips, setUnlockedShips, activeShipId, setActiveShipId, onBack }) {
   const [selectedShipId, setSelectedShipId] = useState(activeShipId);
+  const hangarRef = useRef(null);
+  const [scale, setScale] = useState(1);
 
   const selectedShip = SHIPS.find(s => s.id === selectedShipId) || SHIPS[0];
   const isUnlocked = true; // All ships free for testing
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (!hangarRef.current) return;
+      const parent = hangarRef.current.parentElement;
+      if (!parent) return;
+      const parentRect = parent.getBoundingClientRect();
+      
+      const scaleX = parentRect.width / 1600;
+      const scaleY = parentRect.height / 900;
+      const newScale = Math.min(scaleX, scaleY);
+      setScale(newScale);
+    };
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const handlePurchase = () => {
     if (!isUnlocked && globalMoney >= selectedShip.cost) {
@@ -399,7 +419,19 @@ export default function Hangar({ globalMoney, setGlobalMoney, unlockedShips, set
   };
 
   return (
-    <div className="hangar-layout">
+    <div 
+      ref={hangarRef}
+      className="hangar-layout"
+      style={{
+        transform: `translate(-50%, -50%) scale(${scale})`,
+        position: 'absolute',
+        top: '50%',
+        left: '50%',
+        width: '1600px',
+        height: '900px',
+        transformOrigin: 'center center'
+      }}
+    >
       {/* Top bar */}
       <div className="hangar-topbar">
         <button className="btn-back" onClick={onBack}></button>
