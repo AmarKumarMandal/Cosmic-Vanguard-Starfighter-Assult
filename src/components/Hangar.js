@@ -536,54 +536,7 @@ export default function Hangar({ globalMoney, setGlobalMoney, unlockedShips, set
                     </div>
                   </div>
 
-                  {/* Special Ability Image (if available) */}
-                  {selectedShip.id === 'z-51' && (
-                    <div className="hangar-ability-illustration" style={{
-                      marginTop: '15px',
-                      borderRadius: '12px',
-                      overflow: 'hidden',
-                      border: '1.5px solid rgba(232, 69, 69, 0.3)',
-                      boxShadow: '0 4px 20px rgba(232, 69, 69, 0.15)',
-                      position: 'relative'
-                    }}>
-                      <img 
-                        src="/z_51_chain_lightning.png" 
-                        alt="Chain Lightning Action" 
-                        style={{
-                          width: '100%',
-                          height: '160px',
-                          objectFit: 'cover',
-                          display: 'block',
-                          filter: 'brightness(0.95) contrast(1.05)'
-                        }} 
-                      />
-                      <div style={{
-                        position: 'absolute',
-                        bottom: 0,
-                        left: 0,
-                        right: 0,
-                        background: 'linear-gradient(to top, rgba(11, 12, 16, 0.95), transparent)',
-                        padding: '8px 12px',
-                        fontSize: '0.75rem',
-                        color: '#e84545',
-                        fontWeight: '700',
-                        textTransform: 'uppercase',
-                        letterSpacing: '1px',
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center'
-                      }}>
-                        <span>In-Action Preview</span>
-                        <span style={{
-                          fontSize: '0.65rem',
-                          background: 'rgba(232, 69, 69, 0.2)',
-                          padding: '2px 6px',
-                          borderRadius: '4px',
-                          border: '1px solid rgba(232, 69, 69, 0.4)'
-                        }}>Active</span>
-                      </div>
-                    </div>
-                  )}
+
                 </>
               );
             })()}
