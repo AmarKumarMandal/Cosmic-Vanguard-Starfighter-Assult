@@ -121,7 +121,7 @@ export class Game {
       'starter': { id: 'none', name: 'None', cd: 0, dur: 0, color: 'transparent' },
       'z-51-gen-1': { id: 'nano-blades', name: 'Nano-Blades', cd: 13, dur: 10, color: '#ffd700' },
       'ship-1': { id: 'cryo-shockwave', name: 'Cryo-Shockwave', cd: 10, dur: 6, color: '#00e5ff' },
-      'z-51': { id: 'lightning-chain', name: 'Chain Lightning', cd: 10, dur: 0.5, color: '#e84545' },
+      'z-51': { id: 'lightning-chain', name: 'Chain Lightning', cd: 10, dur: 0.5, color: '#00e5ff' },
       'spectre': { id: 'laser-beam', name: 'Plasma Laser', cd: 10, dur: 5, color: '#00ff00' },
       'ship-3': { id: 'phase-shift', name: 'Quantum Decoy', cd: 10, dur: 5, color: '#a020f0' },
       'apex': { id: 'chrono-slow', name: 'Chrono Warp', cd: 14, dur: 7, color: '#ff6600' },
@@ -1039,33 +1039,88 @@ export class Game {
       const targets = this.abilityState.targets;
       if (targets && targets.length > 0) {
         ctx.save();
-        ctx.strokeStyle = this.abilityColor;
-        ctx.shadowBlur = 20;
-        ctx.shadowColor = this.abilityColor;
-        ctx.lineWidth = 3;
-        let currentX = this.player.x;
-        let currentY = this.player.y;
-        targets.forEach(target => {
-          ctx.beginPath();
-          ctx.moveTo(currentX, currentY);
-          const segments = 6;
-          const dx = target.x - currentX;
-          const dy = target.y - currentY;
+        
+        // Helper to draw a single jagged line between two points
+        const drawLightningLine = (x1, y1, x2, y2, displace = 30) => {
+          const points = [{x: x1, y: y1}];
+          const dx = x2 - x1;
+          const dy = y2 - y1;
           const dist = Math.hypot(dx, dy);
+          const segments = Math.max(5, Math.floor(dist / 35));
+          
           for (let i = 1; i < segments; i++) {
             const ratio = i / segments;
-            const px = currentX + dx * ratio;
-            const py = currentY + dy * ratio;
+            const px = x1 + dx * ratio;
+            const py = y1 + dy * ratio;
             const perpX = -dy / dist;
             const perpY = dx / dist;
-            const offset = (Math.random() - 0.5) * 35;
-            ctx.lineTo(px + perpX * offset, py + perpY * offset);
+            
+            // Random displacement that peaks in the middle and tapers off near endpoints
+            const factor = Math.sin(ratio * Math.PI);
+            const offset = (Math.random() - 0.5) * displace * factor;
+            points.push({
+              x: px + perpX * offset,
+              y: py + perpY * offset
+            });
           }
-          ctx.lineTo(target.x, target.y);
+          points.push({x: x2, y: y2});
+          
+          // Draw the calculated path
+          ctx.beginPath();
+          ctx.moveTo(points[0].x, points[0].y);
+          for (let i = 1; i < points.length; i++) {
+            ctx.lineTo(points[i].x, points[i].y);
+          }
           ctx.stroke();
-          currentX = target.x;
-          currentY = target.y;
+          
+          return points;
+        };
+
+        const drawBolt = (x1, y1, x2, y2) => {
+          // 1. Draw outer cyan glow
+          ctx.strokeStyle = '#00f0ff';
+          ctx.shadowColor = '#00aeff';
+          ctx.shadowBlur = 25;
+          ctx.lineWidth = 6;
+          const mainPoints = drawLightningLine(x1, y1, x2, y2, 45);
+          
+          // Draw branching sub-arcs branching off from random points on the main path
+          mainPoints.forEach((p, idx) => {
+            if (idx > 0 && idx < mainPoints.length - 1 && Math.random() < 0.25) {
+              const angle = Math.random() * Math.PI * 2;
+              const branchLength = 20 + Math.random() * 40;
+              const bx = p.x + Math.cos(angle) * branchLength;
+              const by = p.y + Math.sin(angle) * branchLength;
+              
+              ctx.save();
+              ctx.lineWidth = 3.5;
+              ctx.strokeStyle = '#00c3ff';
+              drawLightningLine(p.x, p.y, bx, by, 15);
+              ctx.restore();
+            }
+          });
+          
+          // 2. Draw inner white core
+          ctx.strokeStyle = '#ffffff';
+          ctx.shadowBlur = 0; // Turn off shadows for the core to make it look sharp
+          ctx.lineWidth = 2;
+          drawLightningLine(x1, y1, x2, y2, 45);
+        };
+
+        // Draw lightning bolts branching from player ship directly to all targets simultaneously
+        targets.forEach(target => {
+          // Origin is player ship's center/weapon muzzle
+          const startX = this.player.x;
+          const startY = this.player.y - 20;
+          
+          drawBolt(startX, startY, target.x, target.y);
+          
+          // Draw an additional parallel chaotic bolt for an intense electric display
+          if (Math.random() < 0.5) {
+            drawBolt(startX, startY, target.x + (Math.random() - 0.5) * 25, target.y + (Math.random() - 0.5) * 25);
+          }
         });
+        
         ctx.restore();
       }
     }

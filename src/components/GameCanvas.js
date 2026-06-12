@@ -9,7 +9,7 @@ const abilityConfig = {
   'starter': { name: 'None', color: 'rgba(255, 255, 255, 0.2)' },
   'z-51-gen-1': { name: 'Blades', color: '#ffd700' },
   'ship-1': { name: 'Freeze', color: '#00e5ff' },
-  'z-51': { name: 'Chain', color: '#e84545' },
+  'z-51': { name: 'Chain', color: '#00e5ff' },
   'spectre': { name: 'Laser', color: '#00ff00' },
   'ship-3': { name: 'Decoy', color: '#a020f0' },
   'apex': { name: 'Warp', color: '#ff6600' },
