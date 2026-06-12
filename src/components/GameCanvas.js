@@ -312,7 +312,7 @@ export default function GameCanvas() {
           <div style={{display: 'flex', flexDirection: 'column', gap: '15px', pointerEvents: 'auto'}}>
             <div style={{display: 'flex', alignItems: 'center', gap: '20px'}}>
               <div className="wave-tracker">Wave: <span id="current-wave"></span></div>
-              <div className="money-tracker" style={{fontSize: '1.5rem', color: '#ffd700', fontWeight: 'bold', textShadow: '0 2px 10px rgba(0,0,0,0.8)'}}>
+              <div className="money-tracker">
                 $ <span id="current-money"></span>
               </div>
             </div>
@@ -451,11 +451,11 @@ export default function GameCanvas() {
             </button>
           )}
 
-          <div style={{display: 'flex', gap: '10px', flexDirection: 'column'}}>
-            <button className="btn-secondary" style={{padding: '5px 15px', height: 'fit-content', opacity: 0.7, zIndex: 10, pointerEvents: 'auto', background: 'rgba(0,0,0,0.5)'}} onClick={() => window.dispatchEvent(new CustomEvent('toggle-pause'))}>
+          <div className="hud-buttons-container">
+            <button className="btn-secondary hud-btn" onClick={() => window.dispatchEvent(new CustomEvent('toggle-pause'))}>
               Pause (Esc)
             </button>
-            <button className="btn-secondary" style={{padding: '5px 15px', height: 'fit-content', opacity: 0.7, zIndex: 10, pointerEvents: 'auto', background: 'rgba(0,0,0,0.5)'}} onClick={saveGame}>
+            <button className="btn-secondary hud-btn" onClick={saveGame}>
               Quick Save
             </button>
           </div>

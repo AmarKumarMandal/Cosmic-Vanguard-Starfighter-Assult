@@ -304,11 +304,9 @@ function AbilityIcon({ type, color }) {
       ref={canvasRef} 
       width={100} 
       height={100} 
+      className="ability-icon-canvas"
       style={{
-        background: 'rgba(15, 15, 20, 0.4)',
-        border: `1.5px solid ${color}4d`,
-        borderRadius: '12px',
-        boxShadow: `0 0 15px ${color}26, inset 0 0 10px ${color}1a`
+        '--icon-color': color
       }}
     ></canvas>
   );
@@ -388,13 +386,19 @@ export default function Hangar({ globalMoney, setGlobalMoney, unlockedShips, set
 
   useEffect(() => {
     const handleResize = () => {
-      if (!hangarRef.current) return;
-      const parent = hangarRef.current.parentElement;
-      if (!parent) return;
-      const parentRect = parent.getBoundingClientRect();
+      let width = window.innerWidth;
+      let height = window.innerHeight;
       
-      const scaleX = parentRect.width / 1600;
-      const scaleY = parentRect.height / 900;
+      // Check if the device is in portrait mode and the parent container is rotated 90 degrees.
+      // In portrait rotation, layout width is screen height and height is screen width.
+      const isPortrait = window.matchMedia("(orientation: portrait)").matches;
+      if (isPortrait) {
+        width = window.innerHeight;
+        height = window.innerWidth;
+      }
+      
+      const scaleX = width / 1600;
+      const scaleY = height / 900;
       const newScale = Math.min(scaleX, scaleY);
       setScale(newScale);
     };
@@ -527,44 +531,20 @@ export default function Hangar({ globalMoney, setGlobalMoney, unlockedShips, set
               const hasPower = abilityInfo.id !== 'none';
               return (
                 <>
-                  <div className="hangar-ability-section" style={{
-                    marginTop: '30px',
-                    padding: '16px',
-                    background: hasPower ? 'rgba(255, 255, 255, 0.02)' : 'rgba(255, 255, 255, 0.005)',
-                    border: hasPower ? '1.5px solid rgba(255, 255, 255, 0.05)' : '1.5px solid rgba(255, 255, 255, 0.02)',
-                    borderRadius: '16px',
-                    display: 'flex',
-                    gap: '15px',
-                    alignItems: 'center',
-                    boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
-                    backdropFilter: 'blur(5px)',
-                    opacity: hasPower ? 1 : 0.5
-                  }}>
+                  <div className={`hangar-ability-section ${hasPower ? 'has-power' : 'no-power'}`}>
                     <AbilityIcon type={abilityInfo.id} color={hasPower ? selectedShip.color : 'rgba(255, 255, 255, 0.3)'} />
-                    <div style={{flex: 1, display: 'flex', flexDirection: 'column', gap: '3px'}}>
-                      <h4 style={{
-                        margin: 0, 
-                        fontSize: '0.75rem', 
-                        textTransform: 'uppercase', 
-                        color: 'rgba(255, 255, 255, 0.4)',
-                        letterSpacing: '1.5px',
-                        fontWeight: '600'
-                      }}>Active Power</h4>
-                      <h3 style={{
-                        margin: 0, 
-                        fontSize: '1.15rem', 
-                        fontWeight: '800', 
-                        color: hasPower ? selectedShip.color : 'rgba(255, 255, 255, 0.4)',
-                        textShadow: hasPower ? `0 0 10px ${selectedShip.color}4d` : 'none',
-                        textTransform: 'uppercase'
-                      }}>{abilityInfo.name}</h3>
-                      <p style={{
-                        margin: 0, 
-                        fontSize: '0.78rem', 
-                        color: 'rgba(255, 255, 255, 0.65)', 
-                        lineHeight: '1.35',
-                        marginTop: '3px'
-                      }}>{abilityInfo.description}</p>
+                    <div className="hangar-ability-info">
+                      <h4 className="hangar-ability-tag">Active Power</h4>
+                      <h3 
+                        className="hangar-ability-title" 
+                        style={{
+                          color: hasPower ? selectedShip.color : 'rgba(255, 255, 255, 0.4)',
+                          textShadow: hasPower ? `0 0 10px ${selectedShip.color}4d` : 'none'
+                        }}
+                      >
+                        {abilityInfo.name}
+                      </h3>
+                      <p className="hangar-ability-desc">{abilityInfo.description}</p>
                     </div>
                   </div>
 
