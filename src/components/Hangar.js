@@ -451,7 +451,7 @@ export default function Hangar({ globalMoney, setGlobalMoney, unlockedShips, set
              <div className="level">LVL {selectedShip.level}</div>
            </div>
 
-           <div className="hangar-stats" style={{marginTop: 'auto'}}>
+           <div className="hangar-stats" style={{marginTop: '20px'}}>
              <div className="stat-row">
                <div className="stat-label">POWER</div>
                <div className="stat-bar-bg">
