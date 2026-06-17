@@ -264,22 +264,31 @@ export default function GameCanvas() {
       
       {gameState === 'menu' && !showLevelSelect && (
         <div id="main-menu" className="ui-overlay">
-          <div className="menu-left-panel">
-            <h1 className="neon-text">SPACE WAR</h1>
-            <div className="menu-buttons">
+          <div className="menu-left-wrapper">
+            <div className="title-container">
+              <img src="/Game Title.png" alt="Cosmic Vanguard: Starfighter Assault" className="game-title-img" />
+            </div>
+            <div className="menu-left-panel">
               <>
                 {hasActiveGame && <button onClick={continueGame} className="menu-btn menu-btn-primary">CONTINUE</button>}
                 <button onClick={() => startGame(1)} className="menu-btn menu-btn-primary">START NEW GAME</button>
-                <button onClick={() => setShowLevelSelect(true)} className="menu-btn menu-btn-secondary">SELECT LEVEL</button>
+                <button onClick={() => setShowLevelSelect(true)} className="menu-btn menu-btn-neon">Select Level Map</button>
                 <button 
                   onClick={loadGame} 
-                  className="menu-btn menu-btn-secondary" 
+                  className="menu-btn menu-btn-neon" 
                   disabled={!hasSaveData} 
                   style={{ opacity: hasSaveData ? 1 : 0.4, cursor: hasSaveData ? 'pointer' : 'not-allowed' }}
                 >
                   LOAD GAME
                 </button>
-                <button onClick={() => setGameState('hangar')} className="menu-btn menu-btn-secondary">HANGAR</button>
+                <button onClick={() => setGameState('hangar')} className="menu-btn menu-btn-neon">
+                  <div className="menu-btn-icon-container">
+                    <div className="engine-flame left-flame"></div>
+                    <div className="engine-flame right-flame"></div>
+                    <img src="/player craftship/Gold_Eagle.png" alt="Aircraft Hangar" className="menu-btn-icon-img" />
+                  </div>
+                  Aircraft Hangar
+                </button>
                 <button onClick={closeApp} className="menu-btn menu-btn-exit">EXIT GAME</button>
               </>
             </div>
