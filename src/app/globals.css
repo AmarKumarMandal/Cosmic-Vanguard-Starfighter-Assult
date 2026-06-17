@@ -813,8 +813,8 @@ body, html {
 }
 
 .level-node {
-  width: clamp(40px, 8vh, 65px);
-  height: clamp(40px, 8vh, 65px);
+  width: clamp(32px, 7.5vmin, 60px);
+  height: clamp(32px, 7.5vmin, 60px);
   border-radius: 50%;
   display: flex;
   justify-content: center;
@@ -849,14 +849,14 @@ body, html {
 }
 
 .node-lock {
-  font-size: clamp(1rem, 2vh, 1.5rem);
+  font-size: clamp(0.9rem, 2vmin, 1.4rem);
   opacity: 0.5;
 }
 
 .node-ring {
   position: absolute;
-  width: clamp(55px, 11vh, 90px);
-  height: clamp(55px, 11vh, 90px);
+  width: clamp(44px, 10vmin, 82px);
+  height: clamp(44px, 10vmin, 82px);
   border-radius: 50%;
   border: 2px solid rgba(255,255,255,0.3);
   z-index: 1;
@@ -875,7 +875,7 @@ body, html {
 
 .level-badge {
   position: absolute;
-  bottom: clamp(-25px, -3.5vh, -35px);
+  bottom: clamp(-22px, -3.2vmin, -30px);
   left: 50%;
   transform: translateX(-50%);
   background: rgba(30, 40, 80, 0.8);
@@ -896,13 +896,13 @@ body, html {
 .level-badge-num {
   background: linear-gradient(135deg, #60a5fa, #2563eb);
   color: white;
-  width: clamp(18px, 2.5vh, 26px);
-  height: clamp(18px, 2.5vh, 26px);
+  width: clamp(14px, 2.2vmin, 22px);
+  height: clamp(14px, 2.2vmin, 22px);
   border-radius: 50%;
   display: flex;
   justify-content: center;
   align-items: center;
-  font-size: clamp(0.7rem, 1.2vh, 0.95rem);
+  font-size: clamp(0.6rem, 1.4vmin, 0.85rem);
   font-weight: 900;
   border: 2px solid #93c5fd;
   margin-right: clamp(4px, 0.8vw, 8px);
@@ -912,8 +912,9 @@ body, html {
 .level-badge-stars {
   display: flex;
   gap: clamp(2px, 0.3vw, 4px);
-  font-size: clamp(0.6rem, 1vh, 0.85rem);
+  font-size: clamp(0.55rem, 1.2vmin, 0.75rem);
 }
+
 
 .level-badge-stars.completed {
   color: #fbbf24;
