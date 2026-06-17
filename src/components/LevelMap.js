@@ -18,10 +18,10 @@ export default function LevelMap({ highScore, onSelect, onBack }) {
 
   return (
     <div className="ui-overlay level-map-overlay">
-      <div className="level-map-container">
-        {/* Background elements to make it look like space/landscape */}
-        <div className="map-background"></div>
+      {/* Background elements to make it look like space/landscape */}
+      <div className="map-background"></div>
 
+      <div className="level-map-container">
         <button onClick={onBack} className="btn-secondary map-back-btn">
           RETURN TO BASE
         </button>
