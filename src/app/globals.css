@@ -58,6 +58,120 @@ body, html {
   backdrop-filter: blur(10px);
 }
 
+#main-menu {
+  background: url('/menu_background.png') no-repeat center 60%;
+  background-size: cover;
+  backdrop-filter: none;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+/* Left-side menu panel */
+.menu-left-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: clamp(20px, 4vh, 50px) clamp(16px, 3vw, 40px);
+  margin-left: clamp(20px, 5vw, 80px);
+  background: rgba(8, 4, 24, 0.72);
+  border: 1.5px solid rgba(180, 60, 255, 0.35);
+  border-radius: clamp(16px, 2.5vh, 28px);
+  box-shadow:
+    0 0 40px rgba(160, 0, 255, 0.25),
+    0 0 80px rgba(160, 0, 255, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  backdrop-filter: blur(18px);
+  min-width: clamp(220px, 28vw, 320px);
+  max-width: clamp(250px, 32vw, 360px);
+}
+
+/* Neon menu buttons */
+.menu-btn {
+  width: 100%;
+  padding: clamp(10px, 1.8vh, 18px) clamp(16px, 2vw, 28px);
+  font-family: inherit;
+  font-size: clamp(0.8rem, 1.6vh, 1.05rem);
+  font-weight: 700;
+  letter-spacing: clamp(1px, 0.3vw, 3px);
+  text-transform: uppercase;
+  cursor: pointer;
+  border-radius: 50px;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.25s ease;
+}
+
+/* Shimmer sweep animation */
+.menu-btn::before {
+  content: '';
+  position: absolute;
+  top: 0; left: -100%;
+  width: 60%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.18), transparent);
+  transition: 0.5s ease;
+}
+.menu-btn:hover::before { left: 150%; }
+
+/* Primary button – purple→pink gradient with glow (START NEW GAME / CONTINUE) */
+.menu-btn-primary {
+  background: linear-gradient(90deg, #7b00ff 0%, #e600a4 100%);
+  color: #fff;
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  box-shadow:
+    0 0 14px rgba(180, 0, 255, 0.6),
+    0 4px 20px rgba(230, 0, 164, 0.35);
+  text-shadow: 0 0 8px rgba(255,255,255,0.6);
+}
+.menu-btn-primary:hover {
+  transform: translateY(-2px) scale(1.03);
+  box-shadow:
+    0 0 28px rgba(180, 0, 255, 0.85),
+    0 6px 30px rgba(230, 0, 164, 0.55);
+}
+
+/* Secondary button – dark with purple neon border (SELECT LEVEL / LOAD / HANGAR) */
+.menu-btn-secondary {
+  background: rgba(20, 8, 50, 0.6);
+  color: #e8d0ff;
+  border: 2px solid rgba(180, 60, 255, 0.65);
+  box-shadow:
+    0 0 10px rgba(160, 0, 255, 0.35),
+    inset 0 0 12px rgba(160, 0, 255, 0.08);
+  text-shadow: 0 0 6px rgba(200, 100, 255, 0.7);
+}
+.menu-btn-secondary:hover {
+  background: rgba(100, 20, 200, 0.35);
+  border-color: rgba(220, 100, 255, 0.9);
+  color: #fff;
+  transform: translateY(-2px) scale(1.03);
+  box-shadow:
+    0 0 22px rgba(180, 0, 255, 0.6),
+    inset 0 0 18px rgba(160, 0, 255, 0.15);
+}
+.menu-btn-secondary:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Exit button – red/orange gradient */
+.menu-btn-exit {
+  background: linear-gradient(90deg, #cc0022 0%, #ff4400 100%);
+  color: #fff;
+  border: 2px solid rgba(255, 80, 0, 0.4);
+  box-shadow:
+    0 0 14px rgba(255, 0, 40, 0.55),
+    0 4px 20px rgba(255, 60, 0, 0.3);
+  text-shadow: 0 0 8px rgba(255,255,255,0.5);
+  margin-top: clamp(4px, 1vh, 10px);
+}
+.menu-btn-exit:hover {
+  transform: translateY(-2px) scale(1.03);
+  box-shadow:
+    0 0 28px rgba(255, 0, 40, 0.8),
+    0 6px 30px rgba(255, 60, 0, 0.5);
+}
+
 .glass-panel {
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -144,9 +258,8 @@ body, html {
 .menu-buttons {
   display: flex;
   flex-direction: column;
-  gap: clamp(8px, 1.5vh, 15px);
+  gap: clamp(8px, 1.4vh, 14px);
   width: 100%;
-  max-width: 300px;
   margin: 0 auto;
 }
 
@@ -960,13 +1073,23 @@ body, html {
     border-radius: 12px !important;
     max-width: 90vw !important;
   }
+  .menu-left-panel {
+    margin-left: clamp(10px, 3vw, 30px) !important;
+    min-width: 0 !important;
+    max-width: clamp(180px, 55vw, 280px) !important;
+    padding: 1rem 1.2rem !important;
+  }
   .neon-text {
     font-size: 2.2rem !important;
     letter-spacing: 2px !important;
   }
   .menu-buttons {
     gap: 6px !important;
-    max-width: 240px !important;
+  }
+  .menu-btn {
+    padding: 8px 14px !important;
+    font-size: 0.8rem !important;
+    letter-spacing: 1px !important;
   }
   .glow-on-hover {
     padding: 8px 20px !important;

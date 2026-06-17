@@ -264,25 +264,25 @@ export default function GameCanvas() {
       
       {gameState === 'menu' && !showLevelSelect && (
         <div id="main-menu" className="ui-overlay">
-          <div className="glass-panel">
-             <h1 className="neon-text">SPACE WAR</h1>
-              <div className="menu-buttons">
-                 <>
-                   {hasActiveGame && <button onClick={continueGame} className="glow-on-hover">CONTINUE</button>}
-                   <button onClick={() => startGame(1)} className={hasActiveGame ? "btn-secondary" : "glow-on-hover"}>START NEW GAME</button>
-                   <button onClick={() => setShowLevelSelect(true)} className="btn-secondary">SELECT LEVEL</button>
-                   <button 
-                     onClick={loadGame} 
-                     className="btn-secondary" 
-                     disabled={!hasSaveData} 
-                     style={{ opacity: hasSaveData ? 1 : 0.4, cursor: hasSaveData ? 'pointer' : 'not-allowed' }}
-                   >
-                     LOAD GAME
-                   </button>
-                   <button onClick={() => setGameState('hangar')} className="btn-secondary">HANGAR</button>
-                   <button onClick={closeApp} className="retry-btn glow-on-hover" style={{marginTop: '10px'}}>EXIT GAME</button>
-                 </>
-             </div>
+          <div className="menu-left-panel">
+            <h1 className="neon-text">SPACE WAR</h1>
+            <div className="menu-buttons">
+              <>
+                {hasActiveGame && <button onClick={continueGame} className="menu-btn menu-btn-primary">CONTINUE</button>}
+                <button onClick={() => startGame(1)} className="menu-btn menu-btn-primary">START NEW GAME</button>
+                <button onClick={() => setShowLevelSelect(true)} className="menu-btn menu-btn-secondary">SELECT LEVEL</button>
+                <button 
+                  onClick={loadGame} 
+                  className="menu-btn menu-btn-secondary" 
+                  disabled={!hasSaveData} 
+                  style={{ opacity: hasSaveData ? 1 : 0.4, cursor: hasSaveData ? 'pointer' : 'not-allowed' }}
+                >
+                  LOAD GAME
+                </button>
+                <button onClick={() => setGameState('hangar')} className="menu-btn menu-btn-secondary">HANGAR</button>
+                <button onClick={closeApp} className="menu-btn menu-btn-exit">EXIT GAME</button>
+              </>
+            </div>
           </div>
         </div>
       )}
