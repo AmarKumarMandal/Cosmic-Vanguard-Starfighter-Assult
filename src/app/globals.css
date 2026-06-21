@@ -1,5 +1,12 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;600;900&family=Orbitron:wght@400;700;800;900&display=swap');
 
+:root {
+  --dpad-btn-size: clamp(55px, 15vmin, 95px);
+  --dpad-offset: clamp(20px, 6vmin, 60px);
+  --dpad-gap: clamp(10px, 2.5vmin, 25px);
+  --ability-btn-size: clamp(50px, 12vmin, 80px);
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -947,36 +954,38 @@ body, html {
 /* On-Screen D-pad Controller */
 .dpad-container {
   position: absolute;
-  width: 150px;
-  height: 150px;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  grid-template-rows: repeat(3, 1fr);
-  gap: 8px;
   z-index: 100;
   pointer-events: auto;
   user-select: none;
 }
 
-.dpad-left {
-  bottom: 40px;
-  left: 40px;
+.dpad-left-vertical {
+  bottom: var(--dpad-offset);
+  left: var(--dpad-offset);
+  display: flex;
+  flex-direction: column;
+  gap: var(--dpad-gap);
 }
 
-.dpad-right {
-  bottom: 40px;
-  right: 40px;
+.dpad-right-horizontal {
+  bottom: var(--dpad-offset);
+  right: var(--dpad-offset);
+  display: flex;
+  flex-direction: row;
+  gap: var(--dpad-gap);
 }
 
 .dpad-btn {
   display: flex;
   justify-content: center;
   align-items: center;
+  width: var(--dpad-btn-size);
+  height: var(--dpad-btn-size);
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(0, 229, 255, 0.3);
   border-radius: 50%;
   color: rgba(255, 255, 255, 0.8);
-  font-size: 1.4rem;
+  font-size: clamp(1.1rem, 3.5vmin, 1.8rem);
   font-weight: bold;
   cursor: pointer;
   outline: none;
@@ -1004,7 +1013,7 @@ body, html {
   border: 2px solid var(--ability-color, #66fcf1);
   border-radius: 50%;
   color: #ffffff;
-  font-size: 0.7rem;
+  font-size: clamp(0.55rem, 1.6vmin, 0.85rem);
   font-weight: bold;
   cursor: pointer;
   outline: none;
@@ -1013,9 +1022,8 @@ body, html {
   -webkit-tap-highlight-color: transparent;
   user-select: none;
   position: absolute;
-  bottom: 80px; /* Centered relative to Dpad height */
-  width: 70px;
-  height: 70px;
+  width: var(--ability-btn-size);
+  height: var(--ability-btn-size);
   z-index: 100;
   pointer-events: auto;
   text-transform: uppercase;
@@ -1023,11 +1031,13 @@ body, html {
 }
 
 .ability-btn-left {
-  left: 210px; /* Offset to the right of left Dpad */
+  left: calc(var(--dpad-offset) + var(--dpad-btn-size) + var(--dpad-gap));
+  bottom: calc(var(--dpad-offset) + (var(--dpad-btn-size) * 2 + var(--dpad-gap) - var(--ability-btn-size)) / 2);
 }
 
 .ability-btn-right {
-  right: 210px; /* Offset to the left of right Dpad */
+  right: calc(var(--dpad-offset) + var(--dpad-btn-size) * 2 + var(--dpad-gap) * 2);
+  bottom: calc(var(--dpad-offset) + (var(--dpad-btn-size) - var(--ability-btn-size)) / 2);
 }
 
 .ability-btn:active:not(:disabled) {
@@ -1286,35 +1296,7 @@ body, html {
   
 
 
-  /* Compact D-pads and controllers */
-  .dpad-container {
-    width: 110px !important;
-    height: 110px !important;
-    gap: 4px !important;
-  }
-  .dpad-left {
-    bottom: 20px !important;
-    left: 20px !important;
-  }
-  .dpad-right {
-    bottom: 20px !important;
-    right: 20px !important;
-  }
-  .dpad-btn {
-    font-size: 1rem !important;
-  }
-  .ability-btn {
-    width: 50px !important;
-    height: 50px !important;
-    font-size: 0.55rem !important;
-    bottom: 48px !important;
-  }
-  .ability-btn-left {
-    left: 140px !important;
-  }
-  .ability-btn-right {
-    right: 140px !important;
-  }
+  /* Compact D-pads and controllers are scaled dynamically via CSS variables now */
 }
 
 /* Hide on-screen mobile controllers on typical desktop monitors (mouse fine-pointing + larger screens) */

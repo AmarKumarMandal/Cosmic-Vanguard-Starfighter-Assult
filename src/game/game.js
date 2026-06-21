@@ -37,6 +37,7 @@ export class Game {
     window.addEventListener('keydown', e => {
       const key = e.key;
       const lowerKey = key.toLowerCase();
+      const upperKey = key.toUpperCase();
       
       if (lowerKey === 'escape' && !this.input.keys['Escape']) {
         window.dispatchEvent(new CustomEvent('toggle-pause'));
@@ -49,14 +50,16 @@ export class Game {
       
       this.input.keys[key] = true;
       this.input.keys[lowerKey] = true;
+      this.input.keys[upperKey] = true;
     });
     window.addEventListener('keyup', e => {
       const key = e.key;
       const lowerKey = key.toLowerCase();
+      const upperKey = key.toUpperCase();
       
       this.input.keys[key] = false;
       this.input.keys[lowerKey] = false;
-      this.input.keys[key.toUpperCase()] = false;
+      this.input.keys[upperKey] = false;
     });
 
     window.addEventListener('blur', () => {

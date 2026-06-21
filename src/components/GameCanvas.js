@@ -440,26 +440,20 @@ export default function GameCanvas() {
           }}>
             HP: <span id="hp-text">-- / --</span>
           </div>
-          
-          {/* On-screen Directional Controls (Split Left and Right) */}
-          {/* Left Controls: Left (◀) and Down (▼) */}
-          <div className="dpad-container dpad-left">
-            <div></div><div></div><div></div>
-            
+                  {/* On-screen Directional Controls (Split Left and Right) */}
+          {/* Left Controls: Up (▲) and Down (▼) */}
+          <div className="dpad-container dpad-left-vertical">
             <button 
               className="dpad-btn"
-              onTouchStart={(e) => handleControlStart(e, 'ArrowLeft')}
-              onTouchEnd={(e) => handleControlEnd(e, 'ArrowLeft')}
-              onTouchCancel={(e) => handleControlEnd(e, 'ArrowLeft')}
-              onMouseDown={(e) => handleControlStart(e, 'ArrowLeft')}
-              onMouseUp={(e) => handleControlEnd(e, 'ArrowLeft')}
-              onMouseLeave={(e) => handleControlEnd(e, 'ArrowLeft')}
+              onTouchStart={(e) => handleControlStart(e, 'ArrowUp')}
+              onTouchEnd={(e) => handleControlEnd(e, 'ArrowUp')}
+              onTouchCancel={(e) => handleControlEnd(e, 'ArrowUp')}
+              onMouseDown={(e) => handleControlStart(e, 'ArrowUp')}
+              onMouseUp={(e) => handleControlEnd(e, 'ArrowUp')}
+              onMouseLeave={(e) => handleControlEnd(e, 'ArrowUp')}
             >
-              ◀
+              ▲
             </button>
-            <div></div><div></div>
-
-            <div></div>
             <button 
               className="dpad-btn"
               onTouchStart={(e) => handleControlStart(e, 'ArrowDown')}
@@ -471,7 +465,6 @@ export default function GameCanvas() {
             >
               ▼
             </button>
-            <div></div>
           </div>
 
           {/* Active Ability Button Left */}
@@ -488,23 +481,19 @@ export default function GameCanvas() {
             </button>
           )}
 
-          {/* Right Controls: Up (▲) and Right (▶) */}
-          <div className="dpad-container dpad-right">
-            <div></div>
+          {/* Right Controls: Left (◀) and Right (▶) */}
+          <div className="dpad-container dpad-right-horizontal">
             <button 
               className="dpad-btn"
-              onTouchStart={(e) => handleControlStart(e, 'ArrowUp')}
-              onTouchEnd={(e) => handleControlEnd(e, 'ArrowUp')}
-              onTouchCancel={(e) => handleControlEnd(e, 'ArrowUp')}
-              onMouseDown={(e) => handleControlStart(e, 'ArrowUp')}
-              onMouseUp={(e) => handleControlEnd(e, 'ArrowUp')}
-              onMouseLeave={(e) => handleControlEnd(e, 'ArrowUp')}
+              onTouchStart={(e) => handleControlStart(e, 'ArrowLeft')}
+              onTouchEnd={(e) => handleControlEnd(e, 'ArrowLeft')}
+              onTouchCancel={(e) => handleControlEnd(e, 'ArrowLeft')}
+              onMouseDown={(e) => handleControlStart(e, 'ArrowLeft')}
+              onMouseUp={(e) => handleControlEnd(e, 'ArrowLeft')}
+              onMouseLeave={(e) => handleControlEnd(e, 'ArrowLeft')}
             >
-              ▲
+              ◀
             </button>
-            <div></div>
-
-            <div></div><div></div>
             <button 
               className="dpad-btn"
               onTouchStart={(e) => handleControlStart(e, 'ArrowRight')}
@@ -516,8 +505,6 @@ export default function GameCanvas() {
             >
               ▶
             </button>
-
-            <div></div><div></div><div></div>
           </div>
 
           {/* Active Ability Button Right */}

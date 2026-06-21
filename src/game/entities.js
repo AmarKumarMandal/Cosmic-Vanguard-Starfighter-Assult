@@ -45,13 +45,18 @@ export class Player {
   }
 
   update(dt, input) {
-    // Input handling
-    if (input.keys['ArrowLeft'] || input.keys['a'] || input.keys['A']) this.vx = -this.speed;
-    else if (input.keys['ArrowRight'] || input.keys['d'] || input.keys['D']) this.vx = this.speed;
+    // Input handling (Case-insensitive check for WASD and Arrow keys)
+    const left = input.keys['ArrowLeft'] || input.keys['arrowleft'] || input.keys['a'] || input.keys['A'];
+    const right = input.keys['ArrowRight'] || input.keys['arrowright'] || input.keys['d'] || input.keys['D'];
+    const up = input.keys['ArrowUp'] || input.keys['arrowup'] || input.keys['w'] || input.keys['W'];
+    const down = input.keys['ArrowDown'] || input.keys['arrowdown'] || input.keys['s'] || input.keys['S'];
+
+    if (left) this.vx = -this.speed;
+    else if (right) this.vx = this.speed;
     else this.vx = 0;
 
-    if (input.keys['ArrowUp'] || input.keys['w'] || input.keys['W']) this.vy = -this.speed;
-    else if (input.keys['ArrowDown'] || input.keys['s'] || input.keys['S']) this.vy = this.speed;
+    if (up) this.vy = -this.speed;
+    else if (down) this.vy = this.speed;
     else this.vy = 0;
 
     // Mobile touch overriding
