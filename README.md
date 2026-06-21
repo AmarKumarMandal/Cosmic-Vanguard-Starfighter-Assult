@@ -12,6 +12,10 @@ Welcome to **Space War**, an action-packed 2D top-down space arcade shooter buil
 * **Split Touch Screen Controllers**: Two-handed D-pads (Left/Down on the left; Up/Right on the right) and flanking active ability buttons positioned for thumb reaches, optimized to automatically hide on mouse-based desktops.
 * **Programmatic Screen Lock**: Safely locks the viewport orientation to landscape using HTML5 fullscreen and Screen Orientation APIs when launching a game on touch devices.
 * **Dynamic Hangar UI**: High-definition, scrollable hangar cards scaling down dynamically via a CSS Grid reordering system with proportional layout rules to prevent overflows on mobile/tablet viewports.
+* **Sleek Audio Controller**: A side-by-side Play/Pause (in-game) and Mute/Unmute bar designed to match the theme. Includes a hover-expand volume slider that collapses when not in use.
+* **Pure Unidirectional Audio State Sync**: Drives state changes entirely from custom event streams emitted by the Web Audio `SoundManager` singleton, guaranteeing that the Play/Pause UI state remains in perfect sync with the playback engine upon page reloads.
+* **Caps Lock / Casing-Independent Keyboard Input**: Key listeners automatically normalize single-character keyboard inputs to lowercase. Pilot WASD movement and active abilities function flawlessly regardless of Caps Lock or Shift states.
+* **Stuck Movement Key Fix**: Clears both uppercase and lowercase states on keyup, with a global window blur listener that flushes active inputs when switching tabs or window focus.
 * **12 Unique Playable Ships**: Choose from basic scout ships to heavy prototype dreadnoughts, each with specialized stats, custom weapons, and levels.
 * **Procedural Engine Flame Rendering**: Dynamic canvas-based rocket thruster flames that flicker organically in real-time, custom-aligned to match each starship's design and colors.
 * **Smooth 2D Canvas Controls**: High frame rate rendering with responsive keyboard, mouse, and touch event handling.
