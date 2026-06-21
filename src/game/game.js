@@ -215,6 +215,7 @@ export class Game {
   serialize() {
     // Only save essential state variables
     return JSON.stringify({
+      status: 'ACTIVE',
       level: this.level || 1,
       targetWave: this.targetWave || 5,
       wave: this.wave,

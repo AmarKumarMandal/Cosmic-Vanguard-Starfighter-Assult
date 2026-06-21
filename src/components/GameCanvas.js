@@ -71,13 +71,47 @@ export default function GameCanvas() {
     }
   };
 
+  const checkSaveData = () => {
+    if (typeof window === 'undefined') return;
+    const savedGame = localStorage.getItem('spaceWarSaveData');
+    if (savedGame) {
+      try {
+        const parsed = JSON.parse(savedGame);
+        if (parsed && parsed.status === 'ACTIVE') {
+          setHasSaveData(true);
+          return;
+        }
+      } catch (e) {
+        console.error('Error parsing save data:', e);
+      }
+    }
+    setHasSaveData(false);
+  };
+
+  const markSaveAsResolved = () => {
+    if (typeof window === 'undefined') return;
+    const savedGame = localStorage.getItem('spaceWarSaveData');
+    if (savedGame) {
+      try {
+        const parsed = JSON.parse(savedGame);
+        if (parsed) {
+          parsed.status = 'RESOLVED';
+          localStorage.setItem('spaceWarSaveData', JSON.stringify(parsed));
+          checkSaveData();
+          console.log("[SAVE] Save data marked as RESOLVED");
+        }
+      } catch (e) {
+        console.error('Error resolving save data:', e);
+      }
+    }
+  };
+
   useEffect(() => {
     setIsMounted(true);
     const savedScore = localStorage.getItem('spaceWarHighScore');
     if (savedScore) setHighScore(parseInt(savedScore));
     
-    const savedGame = localStorage.getItem('spaceWarSaveData');
-    if (savedGame) setHasSaveData(true);
+    checkSaveData();
 
     const savedBank = localStorage.getItem('spaceWarBank');
     if (savedBank !== null) {
@@ -152,6 +186,7 @@ export default function GameCanvas() {
       setGameState('gameover');
       setFinalWave(e.detail.wave);
       bankSessionMoney();
+      markSaveAsResolved();
     };
 
     const handleLevelComplete = (e) => {
@@ -160,6 +195,7 @@ export default function GameCanvas() {
       setFinalWave(levelBeat); // use finalWave state to store the level beaten for UI
       
       bankSessionMoney();
+      markSaveAsResolved();
 
       setHighScore((prev) => {
         const currentHigh = Math.max(Number(prev) || 1, 1);
@@ -223,7 +259,8 @@ export default function GameCanvas() {
 
   const startGame = (level = 1) => {
     lockLandscape();
-    bankSessionMoney();
+    // Do not call bankSessionMoney() here to prevent banking abandoned runs
+    markSaveAsResolved(); // Invalidate any previous active save when starting a new run
     setGameState('playing');
     if (gameRef.current) {
       gameRef.current.start(level);
@@ -239,9 +276,18 @@ export default function GameCanvas() {
   const loadGame = () => {
     const data = localStorage.getItem('spaceWarSaveData');
     if (data && gameRef.current) {
-      lockLandscape();
-      gameRef.current.startFromLoad(data);
-      setGameState('playing');
+      try {
+        const parsed = JSON.parse(data);
+        if (parsed && parsed.status === 'ACTIVE') {
+          lockLandscape();
+          gameRef.current.startFromLoad(data);
+          setGameState('playing');
+        } else {
+          alert('No active save data found!');
+        }
+      } catch (e) {
+        console.error('Error loading save:', e);
+      }
     }
   };
 
@@ -249,19 +295,22 @@ export default function GameCanvas() {
     if (gameRef.current) {
       const data = gameRef.current.serialize();
       localStorage.setItem('spaceWarSaveData', data);
-      setHasSaveData(true);
+      checkSaveData();
       alert('Game Saved! Initializing cryogenic stasis...');
     }
   };
 
   const quitGameFromPause = () => {
-    bankSessionMoney();
+    // Save-and-Quit keeps the money exactly as it was (do not call bankSessionMoney)
+    if (gameRef.current) {
+      gameRef.current.isRunning = false;
+    }
     setHasActiveGame(false);
     setGameState('menu');
   };
 
   const quitGameFromGameOver = () => {
-    bankSessionMoney(); 
+    // Session money is already banked on death (do not call bankSessionMoney)
     setHasActiveGame(false);
     setGameState('menu');
   };
