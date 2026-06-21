@@ -46,12 +46,12 @@ export class Player {
 
   update(dt, input) {
     // Input handling
-    if (input.keys['ArrowLeft'] || input.keys['a']) this.vx = -this.speed;
-    else if (input.keys['ArrowRight'] || input.keys['d']) this.vx = this.speed;
+    if (input.keys['ArrowLeft'] || input.keys['a'] || input.keys['A']) this.vx = -this.speed;
+    else if (input.keys['ArrowRight'] || input.keys['d'] || input.keys['D']) this.vx = this.speed;
     else this.vx = 0;
 
-    if (input.keys['ArrowUp'] || input.keys['w']) this.vy = -this.speed;
-    else if (input.keys['ArrowDown'] || input.keys['s']) this.vy = this.speed;
+    if (input.keys['ArrowUp'] || input.keys['w'] || input.keys['W']) this.vy = -this.speed;
+    else if (input.keys['ArrowDown'] || input.keys['s'] || input.keys['S']) this.vy = this.speed;
     else this.vy = 0;
 
     // Mobile touch overriding

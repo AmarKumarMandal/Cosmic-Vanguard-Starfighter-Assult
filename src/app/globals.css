@@ -71,16 +71,16 @@ body, html {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: clamp(16px, 3vh, 40px) clamp(16px, 3vw, 40px);
+  padding: clamp(10px, 2.5vmin, 30px) clamp(16px, 3vmax, 40px);
   background: transparent;
   border: none;
   box-shadow: none;
   backdrop-filter: none;
-  min-width: clamp(220px, 32vw, 360px);
-  max-width: clamp(260px, 38vw, 420px);
+  min-width: clamp(200px, 30vmax, 360px);
+  max-width: clamp(240px, 36vmax, 420px);
   width: 100%;
-  gap: clamp(16px, 3vh, 34px);
-  transform: translateY(3vh);
+  gap: clamp(12px, 2.5vmin, 26px);
+  transform: translateY(2.5vmin);
 }
 
 /* Outer wrapper: stacks title + panel vertically, centered */
@@ -89,8 +89,8 @@ body, html {
   flex-direction: column;
   align-items: center;
   margin-left: 0;
-  margin-top: -18vh;
-  gap: clamp(14px, 3vh, 30px);
+  margin-top: -15vmin;
+  gap: clamp(12px, 2.5vmin, 24px);
 }
 
 /* Title container to keep the image centered and sized correctly */
@@ -103,7 +103,7 @@ body, html {
   padding: 0;
   border: none;
   box-shadow: none;
-  transform: translateY(1.5vh);
+  transform: translateY(1.5vmin);
 }
 
 .game-title-img {
@@ -133,13 +133,13 @@ body, html {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: clamp(8px, 1vw, 12px);
+  gap: clamp(6px, 0.8vmax, 12px);
   width: 100%;
-  padding: clamp(10px, 1.8vh, 18px) clamp(16px, 2vw, 28px);
+  padding: clamp(8px, 1.6vmin, 16px) clamp(14px, 2vmax, 26px);
   font-family: inherit;
-  font-size: clamp(0.8rem, 1.6vh, 1.05rem);
+  font-size: clamp(0.75rem, 1.4vmin, 1.02rem);
   font-weight: 700;
-  letter-spacing: clamp(1px, 0.3vw, 3px);
+  letter-spacing: clamp(1px, 0.3vmax, 3px);
   text-transform: uppercase;
   cursor: pointer;
   border-radius: 50px;
@@ -150,12 +150,12 @@ body, html {
 
 .menu-btn-icon-container {
   position: relative;
-  width: clamp(26px, 3.5vh, 36px);
-  height: clamp(26px, 3.5vh, 36px);
+  width: clamp(22px, 3.2vmin, 34px);
+  height: clamp(22px, 3.2vmin, 34px);
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-right: 6px;
+  margin-right: clamp(4px, 0.5vmax, 8px);
 }
 
 .menu-btn-icon-img {
@@ -415,7 +415,7 @@ body, html {
 .menu-buttons {
   display: flex;
   flex-direction: column;
-  gap: clamp(14px, 2.5vh, 26px);
+  gap: clamp(10px, 2.2vmin, 22px);
   width: 100%;
   margin: 0 auto;
 }
@@ -441,13 +441,24 @@ body, html {
 }
 
 /* Hangar Styles */
+.hangar-backdrop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle at center, #1a0b3e 0%, #050515 100%);
+  z-index: 18; /* sits behind scaled hangar container but covers the game canvas */
+  overflow: hidden;
+}
+
 .hangar-layout {
   position: absolute;
   top: 0; left: 0; width: 100%; height: 100%;
   display: flex;
   flex-direction: column;
   z-index: 20;
-  background: radial-gradient(circle at center, #1a0b3e 0%, #050515 100%);
+  background: transparent;
   padding: 2rem;
   color: #fff;
 }
@@ -740,8 +751,8 @@ body, html {
   position: relative;
   width: 100%;
   height: 100%;
-  max-width: 1400px;
-  margin: 0 auto;
+  max-width: 100%;
+  margin: 0;
 }
 
 .map-background {
@@ -766,10 +777,10 @@ body, html {
 
 .map-content {
   position: absolute;
-  top: 8%;
-  bottom: 12%;
-  left: 8%;
-  right: 8%;
+  top: 6%;
+  bottom: 10%;
+  left: 4%;
+  right: 4%;
 }
 
 .map-paths {
@@ -1231,24 +1242,34 @@ body, html {
     border-radius: 12px !important;
     max-width: 90vw !important;
   }
+  .menu-left-wrapper {
+    margin-top: -12vmin !important;
+    gap: clamp(10px, 2vmin, 20px) !important;
+  }
   .menu-left-panel {
-    margin-left: clamp(10px, 3vw, 30px) !important;
+    margin-left: 0 !important;
     min-width: 0 !important;
-    max-width: clamp(180px, 55vw, 280px) !important;
-    padding: 1rem 1.2rem !important;
-    gap: clamp(10px, 2vh, 18px) !important;
+    max-width: clamp(180px, 32vmax, 280px) !important;
+    padding: 0.6rem 1.2rem !important;
+    gap: clamp(8px, 1.8vmin, 14px) !important;
+    transform: translateY(1.5vmin) !important;
   }
   .neon-text {
     font-size: 2.2rem !important;
     letter-spacing: 2px !important;
   }
   .menu-buttons {
-    gap: 6px !important;
+    gap: clamp(6px, 1.8vmin, 12px) !important;
   }
   .menu-btn {
-    padding: 8px 14px !important;
-    font-size: 0.8rem !important;
+    padding: clamp(6px, 1.2vmin, 12px) clamp(10px, 1.5vmax, 20px) !important;
+    font-size: clamp(0.7rem, 1.2vmin, 0.85rem) !important;
     letter-spacing: 1px !important;
+  }
+  .menu-btn-icon-container {
+    width: clamp(18px, 2.5vmin, 26px) !important;
+    height: clamp(18px, 2.5vmin, 26px) !important;
+    margin-right: 4px !important;
   }
   .glow-on-hover {
     padding: 8px 20px !important;
@@ -1311,6 +1332,175 @@ body, html {
   .ability-btn-right {
     right: 40px;
   }
+}
+
+/* Audio Controller Widget Styles */
+/* Audio Controller Widget Styles */
+.audio-controller-row-container {
+  position: absolute;
+  top: clamp(12px, 3.5vh, 24px);
+  right: clamp(12px, 2.5vw, 24px);
+  z-index: 9999;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: clamp(6px, 1.2vw, 10px);
+  background: rgba(10, 10, 25, 0.85);
+  border: 1px solid rgba(102, 252, 241, 0.35);
+  border-radius: clamp(6px, 1.5vh, 10px);
+  padding: clamp(4px, 1vh, 8px) clamp(6px, 1.5vw, 10px);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5), 0 0 15px rgba(102, 252, 241, 0.2);
+  pointer-events: auto;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.audio-controller-row-container.in-game {
+  position: relative;
+  top: auto;
+  right: auto;
+  z-index: 10;
+  box-shadow: none;
+  background: rgba(10, 10, 25, 0.7);
+  margin-top: clamp(4px, 1.2vh, 8px);
+}
+
+.audio-control-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(102, 252, 241, 0.25);
+  border-radius: clamp(4px, 1vh, 8px);
+  width: clamp(34px, 7.5vh, 40px);
+  height: clamp(34px, 7.5vh, 40px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #66fcf1;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.audio-control-btn:hover {
+  background: rgba(102, 252, 241, 0.18);
+  border-color: #66fcf1;
+  color: #66fcf1;
+  box-shadow: 0 0 10px rgba(102, 252, 241, 0.4);
+  transform: scale(1.05);
+}
+
+.audio-control-btn:active {
+  transform: scale(0.95);
+}
+
+/* Play/Pause custom states */
+.audio-control-btn.paused {
+  color: rgba(102, 252, 241, 0.55);
+  border-color: rgba(102, 252, 241, 0.2);
+}
+
+.audio-control-btn.paused:hover {
+  color: #66fcf1;
+  border-color: #66fcf1;
+}
+
+/* Mute states */
+.audio-control-btn.muted {
+  color: #ff0055;
+  border-color: rgba(255, 0, 85, 0.35);
+}
+
+.audio-control-btn.muted:hover {
+  background: rgba(255, 0, 85, 0.15);
+  border-color: #ff0055;
+  box-shadow: 0 0 10px rgba(255, 0, 85, 0.4);
+}
+
+.btn-icon {
+  width: clamp(14px, 3vh, 18px);
+  height: clamp(14px, 3vh, 18px);
+  display: block;
+}
+
+.audio-icon {
+  width: clamp(16px, 3.5vh, 20px);
+  height: clamp(16px, 3.5vh, 20px);
+  display: block;
+}
+
+/* Hover-Expand Volume Slider Styles */
+.audio-volume-wrapper {
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+.audio-slider-popover {
+  width: 0;
+  opacity: 0;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  margin-left: 0;
+}
+
+/* Expand the slider container on hover or keyboard focus of the wrapper */
+.audio-volume-wrapper:hover .audio-slider-popover,
+.audio-volume-wrapper:focus-within .audio-slider-popover {
+  width: 80px;
+  opacity: 1;
+  margin-left: 8px;
+}
+
+.audio-volume-slider {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.12);
+  outline: none;
+  cursor: pointer;
+  touch-action: none;
+}
+
+.audio-volume-slider::-webkit-slider-runnable-track {
+  width: 100%;
+  height: 6px;
+  cursor: pointer;
+}
+
+.audio-volume-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  height: 12px;
+  width: 12px;
+  border-radius: 50%;
+  background: #66fcf1;
+  cursor: pointer;
+  margin-top: -3px;
+  box-shadow: 0 0 6px #66fcf1;
+  transition: transform 0.1s, background-color 0.2s;
+}
+
+.audio-volume-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.25);
+  background: #ffffff;
+  box-shadow: 0 0 10px #ffffff;
+}
+
+.audio-volume-slider::-moz-range-thumb {
+  height: 12px;
+  width: 12px;
+  border: none;
+  border-radius: 50%;
+  background: #66fcf1;
+  cursor: pointer;
+  box-shadow: 0 0 6px #66fcf1;
+  transition: transform 0.1s, background-color 0.2s;
+}
+
+.audio-volume-slider::-moz-range-thumb:hover {
+  transform: scale(1.25);
+  background: #ffffff;
+  box-shadow: 0 0 10px #ffffff;
 }
 
 

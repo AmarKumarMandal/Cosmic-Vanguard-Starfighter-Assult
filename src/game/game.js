@@ -35,17 +35,33 @@ export class Game {
     };
 
     window.addEventListener('keydown', e => {
-      if (e.key === 'Escape' && !this.input.keys[e.key]) {
+      const key = e.key;
+      const lowerKey = key.toLowerCase();
+      
+      if (lowerKey === 'escape' && !this.input.keys['Escape']) {
         window.dispatchEvent(new CustomEvent('toggle-pause'));
       }
-      if ((e.key === ' ' || e.key === 'Spacebar' || e.key === 'Shift' || e.key === 'f' || e.key === 'e') && this.isRunning && !this.isPaused) {
+      if ((lowerKey === ' ' || lowerKey === 'spacebar' || lowerKey === 'shift' || lowerKey === 'f' || lowerKey === 'e') && this.isRunning && !this.isPaused) {
         // Prevent page scrolling on Spacebar
-        if (e.key === ' ') e.preventDefault();
+        if (lowerKey === ' ') e.preventDefault();
         this.activateAbility();
       }
-      this.input.keys[e.key] = true;
+      
+      this.input.keys[key] = true;
+      this.input.keys[lowerKey] = true;
     });
-    window.addEventListener('keyup', e => this.input.keys[e.key] = false);
+    window.addEventListener('keyup', e => {
+      const key = e.key;
+      const lowerKey = key.toLowerCase();
+      
+      this.input.keys[key] = false;
+      this.input.keys[lowerKey] = false;
+      this.input.keys[key.toUpperCase()] = false;
+    });
+
+    window.addEventListener('blur', () => {
+      this.input.keys = {};
+    });
 
     // Custom window listener for mobile buttons
     window.addEventListener('activate-ability', () => {

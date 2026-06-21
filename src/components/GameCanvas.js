@@ -4,6 +4,8 @@ import { Game } from '@/game/game';
 import Hangar from './Hangar';
 import LevelMap from './LevelMap';
 import { SHIPS } from '@/game/ships';
+import AudioController from '@/audio/AudioController';
+import soundManagerInstance from '@/audio/SoundManager';
 
 const abilityConfig = {
   'starter': { name: 'None', color: 'rgba(255, 255, 255, 0.2)' },
@@ -94,6 +96,28 @@ export default function GameCanvas() {
     
     setBankLoaded(true);
   }, []);
+
+  // Handle auto-switching between menu music (tempest) and gameplay music (cyberpunk/overdrive)
+  useEffect(() => {
+    if (!soundManagerInstance) return;
+
+    if (gameState === 'playing') {
+      const targetTrack = soundManagerInstance.lastGameplayTrack || 'cyberpunk';
+      if (soundManagerInstance.currentTrackKey !== targetTrack) {
+        soundManagerInstance.setTrack(targetTrack);
+      }
+      if (soundManagerInstance.isPlaying) {
+        soundManagerInstance.play();
+      }
+    } else {
+      if (soundManagerInstance.currentTrackKey !== 'tempest') {
+        soundManagerInstance.setTrack('tempest');
+      }
+      if (soundManagerInstance.isPlaying) {
+        soundManagerInstance.play();
+      }
+    }
+  }, [gameState]);
 
   useEffect(() => {
     if (bankLoaded) {
@@ -261,6 +285,7 @@ export default function GameCanvas() {
 
       <div className="game-container">
         <canvas ref={canvasRef} id="game-canvas" />
+        {gameState !== 'playing' && <AudioController inGame={false} />}
       
       {gameState === 'menu' && !showLevelSelect && (
         <div id="main-menu" className="ui-overlay">
@@ -462,11 +487,9 @@ export default function GameCanvas() {
 
           <div className="hud-buttons-container">
             <button className="btn-secondary hud-btn" onClick={() => window.dispatchEvent(new CustomEvent('toggle-pause'))}>
-              Pause (Esc)
+              Pause
             </button>
-            <button className="btn-secondary hud-btn" onClick={saveGame}>
-              Quick Save
-            </button>
+            <AudioController inGame={true} />
           </div>
         </div>
       )}
@@ -476,12 +499,19 @@ export default function GameCanvas() {
           <div className="glass-panel">
              <h1 className="neon-text" style={{fontSize: '3rem'}}>PAUSED</h1>
              <p>Press Esc to resume</p>
-             <div className="menu-buttons">
-               <button onClick={continueGame} className="glow-on-hover">CONTINUE</button>
-               <button onClick={saveGame} className="btn-secondary">SAVE GAME</button>
-               <button onClick={loadGame} className="btn-secondary">LOAD GAME</button>
-               <button onClick={quitGameFromPause} className="retry-btn glow-on-hover" style={{marginTop: '10px'}}>QUIT TO MENU</button>
-             </div>
+              <div className="menu-buttons">
+                <button onClick={continueGame} className="menu-btn menu-btn-primary">CONTINUE</button>
+                <button onClick={saveGame} className="menu-btn menu-btn-neon">SAVE GAME</button>
+                <button 
+                  onClick={loadGame} 
+                  className="menu-btn menu-btn-neon" 
+                  disabled={!hasSaveData} 
+                  style={{ opacity: hasSaveData ? 1 : 0.4, cursor: hasSaveData ? 'pointer' : 'not-allowed' }}
+                >
+                  LOAD GAME
+                </button>
+                <button onClick={quitGameFromPause} className="menu-btn menu-btn-exit">QUIT TO MENU</button>
+              </div>
           </div>
         </div>
       )}

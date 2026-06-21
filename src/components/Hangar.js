@@ -423,9 +423,10 @@ export default function Hangar({ globalMoney, setGlobalMoney, unlockedShips, set
   };
 
   return (
-    <div 
-      ref={hangarRef}
-      className="hangar-layout"
+    <div className="hangar-backdrop">
+      <div 
+        ref={hangarRef}
+        className="hangar-layout"
       style={{
         transform: `translate(-50%, -50%) scale(${scale})`,
         position: 'absolute',
@@ -554,6 +555,7 @@ export default function Hangar({ globalMoney, setGlobalMoney, unlockedShips, set
             })()}
         </div>
 
+      </div>
       </div>
     </div>
   );
