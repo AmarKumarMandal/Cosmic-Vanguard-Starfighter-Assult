@@ -16,6 +16,9 @@ Welcome to **Space War**, an action-packed 2D top-down space arcade shooter buil
 * **Pure Unidirectional Audio State Sync**: Drives state changes entirely from custom event streams emitted by the Web Audio `SoundManager` singleton, guaranteeing that the Play/Pause UI state remains in perfect sync with the playback engine upon page reloads.
 * **Caps Lock / Casing-Independent Keyboard Input**: Key listeners automatically normalize single-character keyboard inputs to lowercase. Pilot WASD movement and active abilities function flawlessly regardless of Caps Lock or Shift states.
 * **Stuck Movement Key Fix**: Clears both uppercase and lowercase states on keyup, with a global window blur listener that flushes active inputs when switching tabs or window focus.
+* **Unified Cross-Device Controls**: Integrates physical keyboard, touch gestures (swipes), and mouse inputs under a single controls layout (Up/Down Arrows, Enter, M Mute, Backspace/Escape, +/- Volume).
+* **Controls Mappings Sheet**: An interactive high-fidelity keyboard controls panel visible only on keyboard-based layouts (PC/Laptop) between Hangar and Exit options. Automatically hidden on touch-only mobile/tablet viewports.
+* **Swipe Gesture Navigation**: Swiping Up/Down on touch screens automatically scrolls selection highlights in main and pause menus.
 * **12 Unique Playable Ships**: Choose from basic scout ships to heavy prototype dreadnoughts, each with specialized stats, custom weapons, and levels.
 * **Procedural Engine Flame Rendering**: Dynamic canvas-based rocket thruster flames that flicker organically in real-time, custom-aligned to match each starship's design and colors.
 * **Smooth 2D Canvas Controls**: High frame rate rendering with responsive keyboard, mouse, and touch event handling.
@@ -36,7 +39,7 @@ Here is the current lineup of starfighters available in the Hangar:
 8. **Gold Eagle** (Level 90) - *Elite Interceptor* (Color: `#ffd700`)
 9. **Reaper** (Level 100) - *Death Assault* (Color: `#ff0033`)
 10. **Phantom 7** (Level 100) - *Brawler* (Color: `#00ff00`)
-11. **White Titan Vulcan** (Level 100) - *Heavy Dreadnought* (Color: `#ffffff`)
+11. **White Titan Vulcan** (Level 100) - *Heavy Dreadnought* (Color: `#ffffff` - 4-layered thruster system)
 
 ---
 
@@ -45,12 +48,16 @@ Here is the current lineup of starfighters available in the Hangar:
 ### 🎹 Keyboard Controls (Desktops & Laptops)
 * **Move Left/Right/Up/Down**: `A`, `S`, `D`, `W` or `Arrow Keys`
 * **Activate Ability**: `Spacebar`, `Shift`, `F`, or `E` key
-* **Pause / Menu**: `Escape` key
+* **Select / Confirm**: `Enter` key
+* **Pause / Back / Menu**: `Escape` or `Backspace` keys
+* **Mute / Unmute Track**: `M` key
+* **Adjust Soundtrack Volume**: `+` (or `=`) and `-` keys
 
 ### 📱 Touch Controls (Mobiles & Tablets)
-* **Move Aircraft**: Use the split glassmorphic D-pad controls on the left and right edges.
-* **Activate Ability**: Tap the flanking ability buttons matching your craft's special weapon.
-* **Play Area**: Touch and drag anywhere on the canvas if you prefer direct tracking movement.
+* **Move Aircraft**: Use the split glassmorphic D-pad controls on the left and right edges, or drag anywhere on the screen.
+* **Menu Navigation**: Swipe Up/Down to cycle selection highlights.
+* **Select / Confirm**: Tap on button options.
+* **Unblock Music**: Tap the pulsing overlay prompt on load/refresh.
 
 ---
 

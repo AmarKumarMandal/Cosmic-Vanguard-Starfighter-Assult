@@ -5,11 +5,25 @@ class SoundManager {
         this.schedulerTimer = null;
         this.nextNoteTime = 0.0;
         this.currentBeat = 0;
-        this.volume = 0.4; // default volume
+        this.volume = 1.0; // music volume (slider-controlled)
         this.isMuted = false;
         this.currentTrackKey = 'tempest';
         this.lastGameplayTrack = 'cyberpunk';
-        this.gainNode = null; // master volume control node
+
+        // Two separate gain channels:
+        //   musicGainNode — melody, bass, drums (controlled by volume slider)
+        //   sfxGainNode   — laser shoot, warning alert (fixed, never affected by slider)
+        this.gainNode = null;      // kept for backwards-compat reference (= musicGainNode)
+        this.musicGainNode = null;
+        this.sfxGainNode = null;
+        this.SFX_GAIN = 0.75;      // fixed SFX channel level
+
+        // Boss warning alarm MP3 (loaded once, reused on every boss spawn)
+        this.alarmAudio = typeof window !== 'undefined' ? new Audio('/warning_alarm.mp3') : null;
+        if (this.alarmAudio) {
+            this.alarmAudio.volume = 0.85;
+            this.alarmAudio.preload = 'auto';
+        }
 
         // Track settings
         this.tempo = 145;
@@ -147,9 +161,20 @@ class SoundManager {
         try {
             const AudioContextClass = window.AudioContext || window.webkitAudioContext;
             this.audioCtx = new AudioContextClass();
-            this.gainNode = this.audioCtx.createGain();
-            this.gainNode.gain.setValueAtTime(this.isMuted ? 0 : this.volume, this.audioCtx.currentTime);
-            this.gainNode.connect(this.audioCtx.destination);
+
+            // Music channel — volume-slider controlled
+            this.musicGainNode = this.audioCtx.createGain();
+            this.musicGainNode.gain.setValueAtTime(this.isMuted ? 0 : this.volume, this.audioCtx.currentTime);
+            this.musicGainNode.connect(this.audioCtx.destination);
+
+            // SFX channel — fixed level, never touched by the volume slider
+            this.sfxGainNode = this.audioCtx.createGain();
+            this.sfxGainNode.gain.setValueAtTime(this.isMuted ? 0 : this.SFX_GAIN, this.audioCtx.currentTime);
+            this.sfxGainNode.connect(this.audioCtx.destination);
+
+            // Keep gainNode pointing at musicGainNode for any legacy callers
+            this.gainNode = this.musicGainNode;
+
             this.setTrack(this.currentTrackKey);
         } catch (e) {
             console.error('Failed to initialize AudioContext:', e);
@@ -214,7 +239,7 @@ class SoundManager {
         // Envelope using synthDecay (ensuring decay target is always after attack)
         const decayTime = Math.max(0.05, Math.min(duration, this.synthDecay));
         voiceGain.gain.setValueAtTime(0, time);
-        voiceGain.gain.linearRampToValueAtTime(this.oscType === 'sawtooth' ? 0.08 : 0.2, time + 0.02);
+        voiceGain.gain.linearRampToValueAtTime(this.oscType === 'sawtooth' ? 0.12 : 0.28, time + 0.02);
         voiceGain.gain.exponentialRampToValueAtTime(0.001, time + decayTime);
 
         // Delay effect
@@ -223,11 +248,11 @@ class SoundManager {
         const delayGain = this.audioCtx.createGain();
         delayGain.gain.value = this.delayFeedback;
 
-        voiceGain.connect(this.gainNode);
+        voiceGain.connect(this.musicGainNode);
         voiceGain.connect(delay);
         delay.connect(delayGain);
         delayGain.connect(delay);
-        delayGain.connect(this.gainNode);
+        delayGain.connect(this.musicGainNode);
     }
 
     createBass(time, freq, duration) {
@@ -261,11 +286,11 @@ class SoundManager {
         // Envelope (ensuring decay target is always after attack)
         const decayTime = Math.max(0.05, duration - 0.01);
         voiceGain.gain.setValueAtTime(0, time);
-        voiceGain.gain.linearRampToValueAtTime(this.bassOscType === 'sawtooth' ? 0.22 : 0.3, time + 0.02);
+        voiceGain.gain.linearRampToValueAtTime(this.bassOscType === 'sawtooth' ? 0.28 : 0.38, time + 0.02);
         voiceGain.gain.exponentialRampToValueAtTime(0.001, time + decayTime);
 
         filter.connect(voiceGain);
-        voiceGain.connect(this.gainNode);
+        voiceGain.connect(this.musicGainNode);
     }
 
     createKick(time) {
@@ -274,12 +299,12 @@ class SoundManager {
         const gain = this.audioCtx.createGain();
 
         osc.connect(gain);
-        gain.connect(this.gainNode);
+        gain.connect(this.musicGainNode);
 
         osc.frequency.setValueAtTime(120, time);
         osc.frequency.exponentialRampToValueAtTime(0.01, time + 0.12);
 
-        gain.gain.setValueAtTime(0.4, time);
+        gain.gain.setValueAtTime(0.32, time);
         gain.gain.exponentialRampToValueAtTime(0.001, time + 0.12);
 
         osc.start(time);
@@ -302,14 +327,13 @@ class SoundManager {
         noiseFilter.type = 'highpass';
         noiseFilter.frequency.value = 1000;
         const noiseGain = this.audioCtx.createGain();
-        noiseGain.gain.setValueAtTime(0.08, time);
+        noiseGain.gain.setValueAtTime(0.07, time);
         noiseGain.gain.exponentialRampToValueAtTime(0.001, time + 0.12);
         noise.connect(noiseFilter);
         noiseFilter.connect(noiseGain);
-        noiseGain.connect(this.gainNode);
+        noiseGain.connect(this.musicGainNode);
         noise.start(time);
 
-        // Tone component
         const osc = this.audioCtx.createOscillator();
         const gain = this.audioCtx.createGain();
         osc.type = 'triangle';
@@ -317,7 +341,7 @@ class SoundManager {
         gain.gain.setValueAtTime(0.12, time);
         gain.gain.exponentialRampToValueAtTime(0.001, time + 0.08);
         osc.connect(gain);
-        gain.connect(this.gainNode);
+        gain.connect(this.musicGainNode);
         osc.start(time);
         osc.stop(time + 0.1);
     }
@@ -336,12 +360,87 @@ class SoundManager {
         noiseFilter.type = 'highpass';
         noiseFilter.frequency.value = 7000;
         const noiseGain = this.audioCtx.createGain();
-        noiseGain.gain.setValueAtTime(0.03, time);
+        noiseGain.gain.setValueAtTime(0.025, time);
         noiseGain.gain.exponentialRampToValueAtTime(0.001, time + 0.03);
         noise.connect(noiseFilter);
         noiseFilter.connect(noiseGain);
-        noiseGain.connect(this.gainNode);
+        noiseGain.connect(this.musicGainNode);
         noise.start(time);
+    }
+
+    // [DESIGN-ONLY] Retro Arcade Laser Shoot Synthesizer (Fast downward sweep of detuned sawtooth waves)
+    createLaserShoot(time) {
+        if (!this.audioCtx || !this.gainNode) return;
+        const playTime = time !== undefined ? time : this.audioCtx.currentTime;
+        const osc = this.audioCtx.createOscillator();
+        const gain = this.audioCtx.createGain();
+
+        osc.type = 'sawtooth';
+        osc.connect(gain);
+        gain.connect(this.sfxGainNode);
+
+        // Sweeping from high pitch down quickly
+        osc.frequency.setValueAtTime(1200, playTime);
+        osc.frequency.exponentialRampToValueAtTime(150, playTime + 0.12);
+
+        // Quick volume decay envelope
+        gain.gain.setValueAtTime(0.32, playTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, playTime + 0.15);
+
+        osc.start(playTime);
+        osc.stop(playTime + 0.15);
+    }
+
+    // [DESIGN-ONLY] Star Wars KOTOR Sith Leviathan Alarm/Alert Synthesizer (Upward pitch-sweep + bandpass filter sweep)
+    createWarningAlert(time) {
+        if (!this.audioCtx || !this.gainNode) return;
+        const playTime = time !== undefined ? time : this.audioCtx.currentTime;
+        const duration = 0.55; // 550ms warning klaxon pulse
+        const osc = this.audioCtx.createOscillator();
+        const filter = this.audioCtx.createBiquadFilter();
+        const gain = this.audioCtx.createGain();
+
+        osc.type = 'sawtooth';
+        filter.type = 'bandpass';
+
+        osc.connect(filter);
+        filter.connect(gain);
+        gain.connect(this.sfxGainNode);
+
+        // Pitch sweeps upwards from 220Hz (A3) to 580Hz (D5) to create the classic whoop sound
+        osc.frequency.setValueAtTime(220, playTime);
+        osc.frequency.exponentialRampToValueAtTime(580, playTime + 0.45);
+
+        // Bandpass filter sweeps cutoff to get the resonant hollow "wah-whoop" sci-fi horn effect
+        filter.frequency.setValueAtTime(400, playTime);
+        filter.frequency.exponentialRampToValueAtTime(1400, playTime + 0.45);
+        filter.Q.setValueAtTime(2.5, playTime); // high Q adds sharp resonance
+
+        // Envelope: 80ms attack ramp, sustain at 0.12, and 100ms decay/release at the end
+        gain.gain.setValueAtTime(0, playTime);
+        gain.gain.linearRampToValueAtTime(0.12, playTime + 0.08); // attack
+        gain.gain.setValueAtTime(0.12, playTime + 0.45);          // sustain
+        gain.gain.exponentialRampToValueAtTime(0.001, playTime + duration); // decay
+
+        osc.start(playTime);
+        osc.stop(playTime + duration);
+    }
+
+    // Play the MP3 boss warning alarm on loop (wave boss or level boss arrival)
+    playBossAlarm() {
+        if (!this.alarmAudio || this.isMuted) return;
+        this.alarmAudio.currentTime = 0;
+        this.alarmAudio.loop = true;
+        this.alarmAudio.volume = Math.min(1, this.volume * 2.0); // slightly louder than music
+        this.alarmAudio.play().catch(() => {}); // ignore autoplay policy errors
+    }
+
+    // Immediately stop the boss warning alarm (called when boss is destroyed)
+    stopBossAlarm() {
+        if (!this.alarmAudio) return;
+        this.alarmAudio.pause();
+        this.alarmAudio.currentTime = 0;
+        this.alarmAudio.loop = false;
     }
 
     scheduler() {
@@ -437,18 +536,28 @@ class SoundManager {
 
     setVolume(vol) {
         this.setVolumeState(vol);
-        if (this.gainNode) {
+        // Only the music channel responds to the volume slider
+        if (this.musicGainNode) {
             const targetVal = this.isMuted ? 0 : this.volume;
-            this.gainNode.gain.setValueAtTime(targetVal, this.audioCtx ? this.audioCtx.currentTime : 0);
+            this.musicGainNode.gain.setValueAtTime(targetVal, this.audioCtx ? this.audioCtx.currentTime : 0);
         }
     }
 
     toggleMute() {
         const muted = !this.isMuted;
         this.setMuteState(muted);
-        if (this.gainNode) {
-            const targetVal = this.isMuted ? 0 : this.volume;
-            this.gainNode.gain.setValueAtTime(targetVal, this.audioCtx ? this.audioCtx.currentTime : 0);
+        const now = this.audioCtx ? this.audioCtx.currentTime : 0;
+        // Mute/unmute music channel
+        if (this.musicGainNode) {
+            this.musicGainNode.gain.setValueAtTime(muted ? 0 : this.volume, now);
+        }
+        // Mute/unmute SFX channel (restores to fixed SFX_GAIN level)
+        if (this.sfxGainNode) {
+            this.sfxGainNode.gain.setValueAtTime(muted ? 0 : this.SFX_GAIN, now);
+        }
+        // Mute/unmute the alarm HTML audio element
+        if (this.alarmAudio) {
+            this.alarmAudio.muted = muted;
         }
         return this.isMuted;
     }

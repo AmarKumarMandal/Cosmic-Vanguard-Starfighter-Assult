@@ -142,6 +142,7 @@ export class Enemy {
     this.isBoss = isBoss;
     this.isLevelBoss = isLevelBoss;
     this.level = level;
+    this.wave = wave;
     this.x = x;
     this.y = y;
 
@@ -349,11 +350,13 @@ export class Enemy {
       }
     }
 
-    ctx.shadowBlur = 0;
-    ctx.fillStyle = '#ff0000';
-    ctx.fillRect(-this.width / 2, -this.height / 2 - 15, this.width, 5);
-    ctx.fillStyle = '#00ff00';
-    ctx.fillRect(-this.width / 2, -this.height / 2 - 15, this.width * Math.max(0, this.hp / this.maxHp), 5);
+    if (!this.isBoss && !this.isLevelBoss) {
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = '#ff0000';
+      ctx.fillRect(-this.width / 2, -this.height / 2 - 15, this.width, 5);
+      ctx.fillStyle = '#00ff00';
+      ctx.fillRect(-this.width / 2, -this.height / 2 - 15, this.width * Math.max(0, this.hp / this.maxHp), 5);
+    }
 
     if (this.isFrozen) {
       ctx.save();
@@ -595,16 +598,16 @@ export class Projectile {
 }
 
 export class Missile {
-  constructor(x, y, targetRef) {
+  constructor(x, y, targetRef, damage = 30) {
     this.x = x;
     this.y = y;
     this.targetRef = targetRef; // live reference to player object
-    this.width = 16;
-    this.height = 28;
+    this.width = 24;            // Increased width for visibility and realistic size
+    this.height = 42;           // Increased height
     this.speed = 320;
     this.hp = 3;           // takes 3 player hits to destroy
     this.maxHp = 3;
-    this.damage = 30;      // big hit if it reaches player
+    this.damage = damage;      // Configurable damage (fixed per level for Wave Boss, defaults to 30 for Level Boss)
     this.isEnemy = true;
     this.isMissile = true;
     this.markedForDeletion = false;
@@ -619,24 +622,28 @@ export class Missile {
     // Trail
     this.trail.push({ x: this.x, y: this.y, age: 0 });
     this.trail.forEach(t => t.age += dt);
-    if (this.trail.length > 12) this.trail.shift();
+    if (this.trail.length > 25) this.trail.shift(); // Denser trail length
 
-    // Home toward player or decoy
+    // Home toward player or decoy (with a 0.6s delayed start and 3.0s tracking limit)
     const target = decoy || this.targetRef;
-    if (target && target.hp > 0) {
+    if (target && target.hp > 0 && this.age > 0.6 && this.age < 3.0) {
       const dx = target.x - this.x;
       const dy = target.y - this.y;
       const dist = Math.hypot(dx, dy);
       if (dist > 1) {
         const desiredVx = (dx / dist) * this.speed;
         const desiredVy = (dy / dist) * this.speed;
-        const turnRate = 3.5;
+        const turnRate = 1.8; // Lower turn rate for realistic wider turn radius
         this.vx += (desiredVx - this.vx) * turnRate * dt;
         this.vy += (desiredVy - this.vy) * turnRate * dt;
         const v = Math.hypot(this.vx, this.vy);
         this.vx = (this.vx / v) * this.speed;
         this.vy = (this.vy / v) * this.speed;
       }
+    } else if (this.age <= 0.6) {
+      // Fly straight down initially
+      this.vx = 0;
+      this.vy = this.speed;
     }
 
     this.x += this.vx * dt;
@@ -646,57 +653,108 @@ export class Missile {
   draw(ctx) {
     ctx.save();
 
-    // Flame trail
+    // Dense Exhaust plume (smoke and fire trail)
     this.trail.forEach((t, i) => {
-      const alpha = (i / this.trail.length) * 0.6;
-      const size = (i / this.trail.length) * 8;
+      const ratio = i / this.trail.length;
+      const alpha = ratio * 0.8;
+      const size = ratio * 14; // Larger trail size
+      
+      // Outer fiery smoke
       ctx.beginPath();
       ctx.arc(t.x, t.y, Math.max(0.1, size), 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(255, 100, 0, ${alpha})`;
+      ctx.fillStyle = `rgba(255, 60, 0, ${alpha * 0.4})`;
+      ctx.fill();
+      
+      // Inner hot core of the trail
+      ctx.beginPath();
+      ctx.arc(t.x, t.y, Math.max(0.1, size * 0.5), 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(255, 200, 0, ${alpha})`;
       ctx.fill();
     });
 
     ctx.translate(this.x, this.y);
     ctx.rotate(Math.atan2(this.vy, this.vx) + Math.PI / 2);
 
-    // Engine flame flicker
-    const flicker = 6 + Math.random() * 6;
+    // Engine flame flicker (exhaust flame)
+    const flicker = 10 + Math.random() * 12;
     ctx.beginPath();
-    ctx.ellipse(0, 10 + flicker / 2, 5, Math.max(1, flicker / 2), 0, 0, Math.PI * 2);
-    ctx.fillStyle = '#ff6600';
-    ctx.globalAlpha = 0.8;
+    ctx.ellipse(0, 15 + flicker / 2, 8, Math.max(1, flicker / 2), 0, 0, Math.PI * 2);
+    ctx.fillStyle = '#ffff88';
+    ctx.shadowBlur = 20;
+    ctx.shadowColor = '#ffaa00';
+    ctx.globalAlpha = 0.9;
     ctx.fill();
     ctx.globalAlpha = 1.0;
+    ctx.shadowBlur = 0; // Reset shadow
 
-    // Body
-    ctx.shadowBlur = 18;
-    ctx.shadowColor = '#ff2200';
-    ctx.fillStyle = '#cc0000';
+    // 1. Tail fins (drawn first/behind main body)
+    ctx.fillStyle = '#ffaa00'; // Orange fins
     ctx.beginPath();
-    ctx.moveTo(0, -14);
+    ctx.moveTo(-6, 8);
+    ctx.lineTo(-14, 15);
+    ctx.lineTo(-10, 5);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.moveTo(6, 8);
+    ctx.lineTo(14, 15);
+    ctx.lineTo(10, 5);
+    ctx.closePath();
+    ctx.fill();
+
+    // 2. Main Missile Body (Metallic grey/silver cylinder with red highlights)
+    ctx.shadowBlur = 25;
+    ctx.shadowColor = '#ff2200';
+    ctx.fillStyle = '#e5e9f0'; // Light silver/white body
+    ctx.beginPath();
+    ctx.moveTo(-6, -12);
+    ctx.lineTo(6, -12);
     ctx.lineTo(6, 10);
-    ctx.lineTo(0, 6);
     ctx.lineTo(-6, 10);
     ctx.closePath();
     ctx.fill();
 
-    // Core highlight
-    ctx.fillStyle = '#ff6644';
-    ctx.shadowBlur = 8;
+    // 3. Nose Cone (Red, pointed tip)
+    ctx.fillStyle = '#d01c1c'; // Deep Red
     ctx.beginPath();
-    ctx.ellipse(0, -4, 3, 7, 0, 0, Math.PI * 2);
+    ctx.moveTo(-6, -12);
+    ctx.quadraticCurveTo(0, -28, 0, -32); // pointier tip
+    ctx.quadraticCurveTo(0, -28, 6, -12);
+    ctx.closePath();
     ctx.fill();
 
-    // HP dots (unrotate first)
-    const angle = Math.atan2(this.vy, this.vx) + Math.PI / 2;
-    ctx.rotate(-angle);
-    for (let i = 0; i < this.maxHp; i++) {
+    // 4. Panel lines / details on the body (red bands)
+    ctx.fillStyle = '#d01c1c';
+    ctx.fillRect(-6, -4, 12, 4); // Red band in the middle
+    
+    // 5. Blinking warning light (LED) at the center
+    const blink = Math.sin(performance.now() / 100) > 0;
+    if (blink) {
       ctx.beginPath();
-      ctx.arc(-8 + i * 8, -22, 3, 0, Math.PI * 2);
-      ctx.fillStyle = i < this.hp ? '#ff4400' : '#333';
-      ctx.shadowBlur = 0;
+      ctx.arc(0, -3, 3, 0, Math.PI * 2);
+      ctx.fillStyle = '#00ff88'; // glowing green LED
+      ctx.shadowBlur = 15;
+      ctx.shadowColor = '#00ff88';
       ctx.fill();
     }
+
+    // HP bar (unrotate first)
+    const angle = Math.atan2(this.vy, this.vx) + Math.PI / 2;
+    ctx.rotate(-angle);
+    ctx.shadowBlur = 0; // Disable shadows for health bar
+    
+    const barW = 24;
+    const barH = 4;
+    const hpX = -barW / 2;
+    const hpY = -28;
+    
+    // Draw health bar container
+    ctx.fillStyle = '#333';
+    ctx.fillRect(hpX, hpY, barW, barH);
+    // Draw active HP
+    ctx.fillStyle = '#ff4400';
+    ctx.fillRect(hpX, hpY, barW * (this.hp / this.maxHp), barH);
 
     ctx.restore();
   }

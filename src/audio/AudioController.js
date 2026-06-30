@@ -5,7 +5,7 @@ import soundManagerInstance from './SoundManager';
 
 export default function AudioController({ inGame = false }) {
   const [isPlaying, setIsPlaying] = useState(true);
-  const [volume, setVolume] = useState(0.4);
+  const [volume, setVolume] = useState(1.0);
   const [isMuted, setIsMuted] = useState(false);
   const [currentTrack, setCurrentTrack] = useState('cyberpunk');
   const containerRef = useRef(null);
@@ -38,6 +38,19 @@ export default function AudioController({ inGame = false }) {
       window.removeEventListener('sound-manager-state', syncState);
     };
   }, []);
+
+  // When context changes (menu <-> gameplay), ensure active track is valid for that context
+  useEffect(() => {
+    if (!soundManagerInstance) return;
+    const track = soundManagerInstance.currentTrackKey;
+    if (inGame && track === 'tempest') {
+      // Switched to gameplay but tempest is playing — switch to cyberpunk
+      soundManagerInstance.setTrack('cyberpunk');
+    } else if (!inGame && track !== 'tempest') {
+      // Switched to menu but a gameplay track is playing — switch to tempest
+      soundManagerInstance.setTrack('tempest');
+    }
+  }, [inGame]);
 
   // Try autoplaying immediately and fallback to interaction listeners if blocked
   useEffect(() => {
@@ -122,6 +135,12 @@ export default function AudioController({ inGame = false }) {
     }
   };
 
+  const handleTrackChange = (e) => {
+    e.stopPropagation();
+    if (!soundManagerInstance) return;
+    soundManagerInstance.setTrack(e.target.value);
+  };
+
   // Prevent event propagation so mouse click doesn't trigger shooter game canvas actions
   const stopPropagation = (e) => {
     e.stopPropagation();
@@ -178,6 +197,17 @@ export default function AudioController({ inGame = false }) {
       onMouseDown={stopPropagation}
       onKeyDown={handleKeyDown}
     >
+      {!isPlaying && !isMuted && (
+        <span 
+          className="audio-start-prompt"
+          onClick={(e) => {
+            e.stopPropagation();
+            if (soundManagerInstance) soundManagerInstance.play();
+          }}
+        >
+          TAP ANYWHERE TO PLAY MUSIC 🔊
+        </span>
+      )}
       {inGame && (
         <button 
           className={`audio-control-btn ${isPlaying ? 'playing' : 'paused'}`} 
@@ -195,6 +225,20 @@ export default function AudioController({ inGame = false }) {
             </svg>
           )}
         </button>
+      )}
+
+      {inGame && (
+        <div className="audio-track-select-container">
+          <select 
+            className="audio-track-select"
+            value={currentTrack}
+            onChange={handleTrackChange}
+            title="Choose Soundtrack"
+          >
+            <option value="cyberpunk">Cyberpunk</option>
+            <option value="overdrive">Nebula Overdrive</option>
+          </select>
+        </div>
       )}
 
       <div className="audio-volume-wrapper">

@@ -336,6 +336,46 @@ body, html {
     inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 
+/* ── KEYBOARD NAVIGATION SELECTION STYLES ── */
+.menu-btn-primary.keyboard-selected {
+  transform: translateY(-2px) scale(1.04);
+  box-shadow:
+    0 0 0 1px rgba(220, 0, 255, 0.5),
+    0 0 28px rgba(200, 0, 255, 0.95),
+    0 0 55px rgba(220, 0, 200, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.menu-btn-neon.keyboard-selected {
+  background: rgba(80, 10, 160, 0.45);
+  border-color: #e060ff;
+  color: #fff;
+  transform: translateY(-2px) scale(1.04);
+  box-shadow:
+    0 0 14px #e060ff,
+    0 0 35px rgba(200, 0, 255, 0.75),
+    inset 0 0 20px rgba(180, 0, 255, 0.2);
+}
+
+.menu-btn-exit.keyboard-selected {
+  transform: translateY(-2px) scale(1.04);
+  box-shadow:
+    0 0 0 1px rgba(255, 80, 0, 0.5),
+    0 0 28px rgba(255, 50, 0, 0.95),
+    0 0 55px rgba(255, 100, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.menu-btn.keyboard-selected .menu-btn-icon-img {
+  filter: drop-shadow(0 0 12px #66fcf1);
+  transform: scale(1.12) rotate(-5deg);
+}
+
+.menu-btn.keyboard-selected .engine-flame {
+  opacity: 1;
+  height: 25px;
+}
+
 .glass-panel {
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -686,7 +726,7 @@ body, html {
   justify-content: space-between;
 }
 
-.wave-tracker {
+.wave-tracker, .level-tracker {
   font-size: clamp(0.9rem, 2vh, 1.4rem);
   font-weight: 600;
   color: #fff;
@@ -1483,6 +1523,77 @@ body, html {
   transform: scale(1.25);
   background: #ffffff;
   box-shadow: 0 0 10px #ffffff;
+}
+
+/* Track Selector Styles */
+.audio-track-select-container {
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+.audio-track-select {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(102, 252, 241, 0.25);
+  border-radius: clamp(4px, 1vh, 8px);
+  color: #66fcf1;
+  padding: 4px 28px 4px 10px;
+  font-family: inherit;
+  font-size: clamp(11px, 2.2vh, 13px);
+  font-weight: 500;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%2366fcf1' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  background-size: 12px;
+}
+
+.audio-track-select:hover {
+  background-color: rgba(102, 252, 241, 0.12);
+  border-color: #66fcf1;
+  box-shadow: 0 0 10px rgba(102, 252, 241, 0.3);
+}
+
+.audio-track-select:focus {
+  border-color: #66fcf1;
+  box-shadow: 0 0 12px rgba(102, 252, 241, 0.5);
+}
+
+/* Custom Dropdown Option styling on Dark Backgrounds */
+.audio-track-select option {
+  background: #0a0a19;
+  color: #66fcf1;
+  padding: 8px;
+}
+
+/* Audio Start Prompt Overlay */
+.audio-start-prompt {
+  font-family: inherit;
+  font-size: clamp(10px, 2.2vh, 12px);
+  color: #66fcf1;
+  text-shadow: 0 0 10px rgba(102, 252, 241, 0.7);
+  animation: pulse-glowing 2s infinite ease-in-out;
+  padding: 0 8px;
+  pointer-events: auto;
+  font-weight: bold;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+@keyframes pulse-glowing {
+  0%, 100% {
+    opacity: 0.6;
+    transform: scale(0.97);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.03);
+  }
 }
 
 

@@ -55,8 +55,8 @@ const HANGAR_ABILITY_INFO = {
   },
   'ship-5': { 
     id: 'drone-helper', 
-    name: 'Dual Heavy Drones', 
-    description: 'Summons two heavy automated drones to hunt targets and clear your flanks.' 
+    name: 'Quad Heavy Drones', 
+    description: 'Summons four heavy automated drones to hunt targets and clear your flanks.' 
   },
   'white-titan-vulcan': { 
     id: 'solar-flare', 

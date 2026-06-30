@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { Game } from '@/game/game';
 import Hangar from './Hangar';
 import LevelMap from './LevelMap';
@@ -25,6 +25,7 @@ const abilityConfig = {
 export default function GameCanvas() {
   const canvasRef = useRef(null);
   const [gameState, setGameState] = useState('menu'); // 'menu', 'playing', 'gameover', 'paused'
+  const [currentLevel, setCurrentLevel] = useState(1);
   const [highScore, setHighScore] = useState(0);
   const [finalWave, setFinalWave] = useState(1);
   const [hasSaveData, setHasSaveData] = useState(false);
@@ -37,6 +38,18 @@ export default function GameCanvas() {
   const [bankLoaded, setBankLoaded] = useState(false);
   const [showLevelSelect, setShowLevelSelect] = useState(false);
   const [startingWave, setStartingWave] = useState(1);
+  const [menuSelectedIndex, setMenuSelectedIndex] = useState(0);
+  const [showControls, setShowControls] = useState(false);
+  const [isKeyboardDevice, setIsKeyboardDevice] = useState(true);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const ua = navigator.userAgent.toLowerCase();
+      const isMobileOrTablet = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(ua)
+        || (window.innerWidth < 1024 && ('ontouchstart' in window || navigator.maxTouchPoints > 0));
+      setIsKeyboardDevice(!isMobileOrTablet);
+    }
+  }, []);
   
   const currentAbility = abilityConfig[activeShipId] || { name: 'Power', color: '#66fcf1' };
   const hasAbility = currentAbility.name !== 'None';
@@ -128,26 +141,47 @@ export default function GameCanvas() {
     const savedActiveShip = localStorage.getItem('spaceWarActiveShip');
     if (savedActiveShip) setActiveShipId(savedActiveShip);
     
+    const savedLevel = localStorage.getItem('spaceWarCurrentLevel');
+    if (savedLevel) setCurrentLevel(parseInt(savedLevel, 10));
+
     setBankLoaded(true);
   }, []);
+
+  // Disable Tab-based navigation entirely to prioritize Arrow keys only
+  useEffect(() => {
+    const handleTabIntercept = (e) => {
+      if (e.key === 'Tab') {
+        e.preventDefault();
+      }
+    };
+    window.addEventListener('keydown', handleTabIntercept, { capture: true });
+    return () => {
+      window.removeEventListener('keydown', handleTabIntercept, { capture: true });
+    };
+  }, []);
+
+  // Persist currentLevel to localStorage on every change (single source of truth)
+  useEffect(() => {
+    localStorage.setItem('spaceWarCurrentLevel', currentLevel.toString());
+  }, [currentLevel]);
 
   // Handle auto-switching between menu music (tempest) and gameplay music (cyberpunk/overdrive)
   useEffect(() => {
     if (!soundManagerInstance) return;
-
-    if (gameState === 'playing') {
+    const isGameplay = gameState === 'playing';
+    if (isGameplay) {
       const targetTrack = soundManagerInstance.lastGameplayTrack || 'cyberpunk';
       if (soundManagerInstance.currentTrackKey !== targetTrack) {
         soundManagerInstance.setTrack(targetTrack);
       }
-      if (soundManagerInstance.isPlaying) {
+      if (!soundManagerInstance.isMuted) {
         soundManagerInstance.play();
       }
     } else {
       if (soundManagerInstance.currentTrackKey !== 'tempest') {
         soundManagerInstance.setTrack('tempest');
       }
-      if (soundManagerInstance.isPlaying) {
+      if (!soundManagerInstance.isMuted) {
         soundManagerInstance.play();
       }
     }
@@ -197,9 +231,13 @@ export default function GameCanvas() {
       bankSessionMoney();
       markSaveAsResolved();
 
+      // Advance and persist the level so returning to menu always shows the next level
+      const nextLevel = levelBeat + 1;
+      setCurrentLevel(nextLevel);
+
       setHighScore((prev) => {
         const currentHigh = Math.max(Number(prev) || 1, 1);
-        const newUnlocked = Math.max(currentHigh, levelBeat + 1);
+        const newUnlocked = Math.max(currentHigh, nextLevel);
         localStorage.setItem('spaceWarHighScore', newUnlocked.toString());
         return newUnlocked;
       });
@@ -257,11 +295,12 @@ export default function GameCanvas() {
     }
   };
 
-  const startGame = (level = 1) => {
+  const startGame = (level = currentLevel) => {
     lockLandscape();
     // Do not call bankSessionMoney() here to prevent banking abandoned runs
     markSaveAsResolved(); // Invalidate any previous active save when starting a new run
     setGameState('playing');
+    setCurrentLevel(level); // useEffect will persist this to localStorage
     if (gameRef.current) {
       gameRef.current.start(level);
     }
@@ -282,6 +321,9 @@ export default function GameCanvas() {
           lockLandscape();
           gameRef.current.startFromLoad(data);
           setGameState('playing');
+          if (parsed.level) {
+            setCurrentLevel(parsed.level); // useEffect will persist this to localStorage
+          }
         } else {
           alert('No active save data found!');
         }
@@ -323,6 +365,176 @@ export default function GameCanvas() {
     }
   };
 
+  const getMenuOptions = useCallback(() => {
+    const options = [];
+    if (hasActiveGame) {
+      options.push({ id: 'continue', label: 'CONTINUE', action: continueGame });
+    }
+    options.push({ id: 'start', label: 'START NEW GAME', action: () => startGame(1) });
+    if (isMounted && currentLevel > 1) {
+      options.push({ id: 'play', label: `PLAY LEVEL ${currentLevel}`, action: () => startGame(currentLevel) });
+    }
+    options.push({ id: 'levelmap', label: 'Select Level Map', action: () => setShowLevelSelect(true) });
+    options.push({ id: 'load', label: 'LOAD GAME', action: loadGame, disabled: !hasSaveData });
+    options.push({ id: 'hangar', label: 'Aircraft Hangar', action: () => setGameState('hangar') });
+    if (isKeyboardDevice) {
+      options.push({ id: 'controls', label: 'Controls', action: () => setShowControls(true) });
+    }
+    options.push({ id: 'exit', label: 'EXIT GAME', action: closeApp });
+    return options;
+  }, [hasActiveGame, continueGame, startGame, isMounted, currentLevel, hasSaveData, loadGame, closeApp, isKeyboardDevice]);
+
+  const getPauseOptions = useCallback(() => {
+    return [
+      { id: 'continue', label: 'CONTINUE', action: continueGame },
+      { id: 'save', label: 'SAVE GAME', action: saveGame },
+      { id: 'load', label: 'LOAD GAME', action: loadGame, disabled: !hasSaveData },
+      { id: 'quit', label: 'QUIT TO MENU', action: quitGameFromPause }
+    ];
+  }, [continueGame, saveGame, loadGame, hasSaveData, quitGameFromPause]);
+
+  // Reset menu index when screen/mode changes
+  useEffect(() => {
+    setMenuSelectedIndex(0);
+  }, [gameState, showLevelSelect, showControls]);
+
+  // Keyboard navigation listener (Up/Down, Enter)
+  useEffect(() => {
+    const isMenu = gameState === 'menu' && !showLevelSelect && !showControls;
+    const isPaused = gameState === 'paused';
+    if (!isMenu && !isPaused) return;
+
+    const options = isMenu ? getMenuOptions() : getPauseOptions();
+
+    const handleKeyDown = (e) => {
+      if (e.key === 'ArrowUp' || e.key === 'Up') {
+        e.preventDefault();
+        setMenuSelectedIndex((prev) => (prev - 1 + options.length) % options.length);
+      } else if (e.key === 'ArrowDown' || e.key === 'Down') {
+        e.preventDefault();
+        setMenuSelectedIndex((prev) => (prev + 1) % options.length);
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        const selectedOption = options[menuSelectedIndex];
+        if (selectedOption && !selectedOption.disabled) {
+          selectedOption.action();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [gameState, showLevelSelect, showControls, menuSelectedIndex, getMenuOptions, getPauseOptions]);
+
+  // Global actions shortcuts (M, Escape, Backspace, +/-, etc.)
+  useEffect(() => {
+    const handleGlobalKeyDown = (e) => {
+      const key = e.key.toLowerCase();
+
+      // M key: Mute/Unmute
+      if (key === 'm') {
+        e.preventDefault();
+        if (soundManagerInstance) {
+          soundManagerInstance.toggleMute();
+        }
+        return;
+      }
+
+      // + or = key: Volume Up
+      if (key === '+' || key === '=') {
+        e.preventDefault();
+        if (soundManagerInstance) {
+          const currentVol = soundManagerInstance.volume;
+          const newVol = Math.min(1.0, currentVol + 0.1);
+          soundManagerInstance.setVolume(newVol);
+        }
+        return;
+      }
+
+      // - key: Volume Down
+      if (key === '-') {
+        e.preventDefault();
+        if (soundManagerInstance) {
+          const currentVol = soundManagerInstance.volume;
+          const newVol = Math.max(0.0, currentVol - 0.1);
+          soundManagerInstance.setVolume(newVol);
+        }
+        return;
+      }
+
+      // Enter key: Close controls if open
+      if (e.key === 'Enter' && showControls) {
+        e.preventDefault();
+        setShowControls(false);
+        return;
+      }
+
+      // Backspace or Escape: Back
+      if (e.key === 'Backspace' || e.key === 'Escape') {
+        e.preventDefault();
+        if (showControls) {
+          setShowControls(false);
+          return;
+        }
+        if (gameState === 'hangar') {
+          setGameState('menu');
+        } else if (gameState === 'menu' && showLevelSelect) {
+          setShowLevelSelect(false);
+        } else if (gameState === 'playing') {
+          window.dispatchEvent(new CustomEvent('toggle-pause'));
+        } else if (gameState === 'paused') {
+          continueGame();
+        } else if (gameState === 'gameover' || gameState === 'levelcomplete') {
+          quitGameFromGameOver();
+        }
+        return;
+      }
+    };
+
+    window.addEventListener('keydown', handleGlobalKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleGlobalKeyDown);
+    };
+  }, [gameState, showLevelSelect, showControls, continueGame, quitGameFromGameOver]);
+
+  // Swipe touch gestures navigation
+  useEffect(() => {
+    const isMenu = gameState === 'menu' && !showLevelSelect && !showControls;
+    const isPaused = gameState === 'paused';
+    if (!isMenu && !isPaused) return;
+
+    const options = isMenu ? getMenuOptions() : getPauseOptions();
+    let touchStartY = 0;
+
+    const handleTouchStart = (e) => {
+      touchStartY = e.touches[0].clientY;
+    };
+
+    const handleTouchEnd = (e) => {
+      const touchEndY = e.changedTouches[0].clientY;
+      const deltaY = touchEndY - touchStartY;
+
+      if (Math.abs(deltaY) > 30) {
+        if (deltaY < 0) {
+          // Swiped up -> move selection down
+          setMenuSelectedIndex((prev) => (prev + 1) % options.length);
+        } else {
+          // Swiped down -> move selection up
+          setMenuSelectedIndex((prev) => (prev - 1 + options.length) % options.length);
+        }
+      }
+    };
+
+    window.addEventListener('touchstart', handleTouchStart, { passive: true });
+    window.addEventListener('touchend', handleTouchEnd, { passive: true });
+    return () => {
+      window.removeEventListener('touchstart', handleTouchStart);
+      window.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, [gameState, showLevelSelect, showControls, getMenuOptions, getPauseOptions]);
+
   return (
     <div className="game-wrapper">
       {/* Landscape orientation requirement overlay for mobile/tablet devices */}
@@ -343,29 +555,100 @@ export default function GameCanvas() {
               <img src="/Game Title.png" alt="Cosmic Vanguard: Starfighter Assault" className="game-title-img" />
             </div>
             <div className="menu-left-panel">
-              <>
-                {hasActiveGame && <button onClick={continueGame} className="menu-btn menu-btn-primary">CONTINUE</button>}
-                <button onClick={() => startGame(1)} className="menu-btn menu-btn-primary">START NEW GAME</button>
-                <button onClick={() => setShowLevelSelect(true)} className="menu-btn menu-btn-neon">Select Level Map</button>
-                <button 
-                  onClick={loadGame} 
-                  className="menu-btn menu-btn-neon" 
-                  disabled={!hasSaveData} 
-                  style={{ opacity: hasSaveData ? 1 : 0.4, cursor: hasSaveData ? 'pointer' : 'not-allowed' }}
-                >
-                  LOAD GAME
-                </button>
-                <button onClick={() => setGameState('hangar')} className="menu-btn menu-btn-neon">
-                  <div className="menu-btn-icon-container">
-                    <div className="engine-flame left-flame"></div>
-                    <div className="engine-flame right-flame"></div>
-                    <img src="/player craftship/Gold_Eagle.png" alt="Aircraft Hangar" className="menu-btn-icon-img" />
-                  </div>
-                  Aircraft Hangar
-                </button>
-                <button onClick={closeApp} className="menu-btn menu-btn-exit">EXIT GAME</button>
-              </>
+              {getMenuOptions().map((opt, idx) => {
+                const isSelected = idx === menuSelectedIndex;
+                
+                // Base classes
+                let btnClass = "menu-btn";
+                if (opt.id === 'continue' || opt.id === 'start') {
+                  btnClass += " menu-btn-primary";
+                } else if (opt.id === 'exit') {
+                  btnClass += " menu-btn-exit";
+                } else {
+                  btnClass += " menu-btn-neon";
+                }
+                
+                if (isSelected) {
+                  btnClass += " keyboard-selected";
+                }
+
+                // Hangar button has custom inner elements
+                if (opt.id === 'hangar') {
+                  return (
+                    <button
+                      key={opt.id}
+                      onClick={opt.action}
+                      onMouseEnter={() => setMenuSelectedIndex(idx)}
+                      className={btnClass}
+                      tabIndex="-1"
+                    >
+                      <div className="menu-btn-icon-container">
+                        <div className="engine-flame left-flame"></div>
+                        <div className="engine-flame right-flame"></div>
+                        <img src="/player craftship/Gold_Eagle.png" alt="Aircraft Hangar" className="menu-btn-icon-img" />
+                      </div>
+                      Aircraft Hangar
+                    </button>
+                  );
+                }
+
+                 return (
+                   <button
+                     key={opt.id}
+                     onClick={opt.action}
+                     onMouseEnter={() => setMenuSelectedIndex(idx)}
+                     className={btnClass}
+                     disabled={opt.disabled}
+                     tabIndex="-1"
+                     style={opt.id === 'load' ? { opacity: hasSaveData ? 1 : 0.4, cursor: hasSaveData ? 'pointer' : 'not-allowed' } : undefined}
+                   >
+                     {opt.label}
+                   </button>
+                 );
+              })}
             </div>
+          </div>
+        </div>
+      )}
+
+      {gameState === 'menu' && showControls && (
+        <div id="controls-menu" className="ui-overlay">
+          <div className="glass-panel controls-panel" style={{ maxWidth: '600px', width: '90%' }}>
+            <h1 className="neon-text" style={{ fontSize: '2.5rem', marginBottom: '20px', textShadow: '0 0 15px rgba(180, 0, 255, 0.7)' }}>KEYBOARD CONTROLS</h1>
+            <div className="controls-grid" style={{ display: 'flex', flexDirection: 'column', gap: '12px', margin: '20px 0', width: '100%' }}>
+              <div className="controls-row" style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>
+                <span className="control-key" style={{ color: '#00ff88', fontWeight: 'bold', textShadow: '0 0 8px rgba(0, 255, 136, 0.5)' }}>W A S D / Arrows</span>
+                <span className="control-desc" style={{ color: '#fff' }}>Move Starfighter</span>
+              </div>
+              <div className="controls-row" style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>
+                <span className="control-key" style={{ color: '#00ff88', fontWeight: 'bold', textShadow: '0 0 8px rgba(0, 255, 136, 0.5)' }}>Space / Shift / F / E</span>
+                <span className="control-desc" style={{ color: '#fff' }}>Activate Special Ability</span>
+              </div>
+              <div className="controls-row" style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>
+                <span className="control-key" style={{ color: '#00ff88', fontWeight: 'bold', textShadow: '0 0 8px rgba(0, 255, 136, 0.5)' }}>Enter Key / Tap</span>
+                <span className="control-desc" style={{ color: '#fff' }}>Confirm / Select Option</span>
+              </div>
+              <div className="controls-row" style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>
+                <span className="control-key" style={{ color: '#00ff88', fontWeight: 'bold', textShadow: '0 0 8px rgba(0, 255, 136, 0.5)' }}>Backspace / Escape</span>
+                <span className="control-desc" style={{ color: '#fff' }}>Back / Pause Menu</span>
+              </div>
+              <div className="controls-row" style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>
+                <span className="control-key" style={{ color: '#00ff88', fontWeight: 'bold', textShadow: '0 0 8px rgba(0, 255, 136, 0.5)' }}>M Key</span>
+                <span className="control-desc" style={{ color: '#fff' }}>Mute / Unmute Track</span>
+              </div>
+              <div className="controls-row" style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>
+                <span className="control-key" style={{ color: '#00ff88', fontWeight: 'bold', textShadow: '0 0 8px rgba(0, 255, 136, 0.5)' }}>Plus (+) / Minus (-)</span>
+                <span className="control-desc" style={{ color: '#fff' }}>Adjust Soundtrack Volume</span>
+              </div>
+            </div>
+            <button 
+              onClick={() => setShowControls(false)} 
+              className="menu-btn menu-btn-primary keyboard-selected"
+              tabIndex="-1"
+              style={{ marginTop: '20px', width: '100%', cursor: 'pointer' }}
+            >
+              CLOSE
+            </button>
           </div>
         </div>
       )}
@@ -392,14 +675,87 @@ export default function GameCanvas() {
 
       {gameState === 'playing' && (
         <div id="hud">
-          <div style={{display: 'flex', flexDirection: 'column', gap: '15px', pointerEvents: 'auto'}}>
-            <div style={{display: 'flex', alignItems: 'center', gap: '20px'}}>
-              <div className="wave-tracker">Wave: <span id="current-wave"></span></div>
-              <div className="money-tracker">
-                $ <span id="current-money"></span>
+          <div style={{display: 'flex', flexDirection: 'column', gap: '8px', pointerEvents: 'auto', alignItems: 'flex-start'}}>
+            <div className="level-tracker">Level: <span id="current-level">--</span></div>
+            <div className="wave-tracker">Wave: <span id="current-wave">--</span></div>
+            <div className="money-tracker" style={{marginTop: '4px'}}>
+              $ <span id="current-money">0</span>
+            </div>
+          </div>
+
+          {/* Boss HP Bar Container - top-centered, scaled with vh/vw clamp */}
+          <div 
+            id="boss-hp-container" 
+            style={{
+              position: 'absolute',
+              top: 'clamp(8px, 2.5vh, 25px)',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              width: 'clamp(200px, 45vw, 600px)',
+              display: 'none', // Managed programmatically by game.js updateHUD
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '4px',
+              zIndex: 99,
+              pointerEvents: 'none'
+            }}
+          >
+            <div 
+              id="boss-hp-name" 
+              style={{
+                fontFamily: 'Orbitron, sans-serif',
+                fontSize: 'clamp(0.7rem, 1.8vh, 1.1rem)',
+                fontWeight: '900',
+                color: '#ff0055',
+                textTransform: 'uppercase',
+                letterSpacing: '2px',
+                textShadow: '0 0 10px rgba(255, 0, 85, 0.6)'
+              }}
+            >
+              BOSS
+            </div>
+            <div 
+              style={{
+                width: '100%',
+                height: 'clamp(12px, 2vh, 18px)',
+                background: 'rgba(11, 12, 16, 0.85)',
+                border: '2px solid rgba(255, 0, 85, 0.4)',
+                borderRadius: '8px',
+                overflow: 'hidden',
+                boxShadow: '0 0 12px rgba(255, 0, 85, 0.2)',
+                backdropFilter: 'blur(5px)',
+                position: 'relative'
+              }}
+            >
+              <div 
+                id="boss-hp-bar" 
+                style={{
+                  height: '100%',
+                  width: '100%',
+                  background: 'linear-gradient(to right, #ff0055 0%, #ffcc00 100%)',
+                  boxShadow: '0 0 8px #ff0055, 0 0 15px rgba(255, 204, 0, 0.4)',
+                  transition: 'width 0.15s ease-out'
+                }}
+              ></div>
+              <div 
+                id="boss-hp-text" 
+                style={{
+                  position: 'absolute',
+                  top: '50%',
+                  left: '50%',
+                  transform: 'translate(-50%, -50%)',
+                  fontFamily: 'monospace',
+                  fontSize: 'clamp(0.6rem, 1.4vh, 0.8rem)',
+                  fontWeight: '900',
+                  color: '#ffffff',
+                  textShadow: '0 1px 3px rgba(0,0,0,0.9)'
+                }}
+              >
+                -- / --
               </div>
             </div>
           </div>
+
           {/* Bottom Fixed Full-Width HP Bar */}
           <div style={{
             position: 'absolute',
@@ -536,17 +892,36 @@ export default function GameCanvas() {
              <h1 className="neon-text" style={{fontSize: '3rem'}}>PAUSED</h1>
              <p>Press Esc to resume</p>
               <div className="menu-buttons">
-                <button onClick={continueGame} className="menu-btn menu-btn-primary">CONTINUE</button>
-                <button onClick={saveGame} className="menu-btn menu-btn-neon">SAVE GAME</button>
-                <button 
-                  onClick={loadGame} 
-                  className="menu-btn menu-btn-neon" 
-                  disabled={!hasSaveData} 
-                  style={{ opacity: hasSaveData ? 1 : 0.4, cursor: hasSaveData ? 'pointer' : 'not-allowed' }}
-                >
-                  LOAD GAME
-                </button>
-                <button onClick={quitGameFromPause} className="menu-btn menu-btn-exit">QUIT TO MENU</button>
+                {getPauseOptions().map((opt, idx) => {
+                  const isSelected = idx === menuSelectedIndex;
+                  
+                  let btnClass = "menu-btn";
+                  if (opt.id === 'continue') {
+                    btnClass += " menu-btn-primary";
+                  } else if (opt.id === 'quit') {
+                    btnClass += " menu-btn-exit";
+                  } else {
+                    btnClass += " menu-btn-neon";
+                  }
+                  
+                  if (isSelected) {
+                    btnClass += " keyboard-selected";
+                  }
+
+                  return (
+                    <button
+                      key={opt.id}
+                      onClick={opt.action}
+                      onMouseEnter={() => setMenuSelectedIndex(idx)}
+                      className={btnClass}
+                      disabled={opt.disabled}
+                      tabIndex="-1"
+                      style={opt.id === 'load' ? { opacity: hasSaveData ? 1 : 0.4, cursor: hasSaveData ? 'pointer' : 'not-allowed' } : undefined}
+                    >
+                      {opt.label}
+                    </button>
+                  );
+                })}
               </div>
           </div>
         </div>
@@ -558,7 +933,7 @@ export default function GameCanvas() {
             <h1 className="neon-text red">MISSION FAILED</h1>
             <p>You survived until Wave: <span className="highlight" id="final-wave">{finalWave}</span></p>
             <p>Highest Level Unlocked: <span className="highlight">{Math.max(highScore, 1)}</span></p>
-            <button onClick={() => startGame(1)} className="glow-on-hover retry-btn">REDEPLOY (LEVEL 1)</button>
+            <button onClick={() => startGame(currentLevel)} className="glow-on-hover retry-btn">REDEPLOY (LEVEL {currentLevel})</button>
             <button onClick={quitGameFromGameOver} className="btn-secondary" style={{display: 'block', marginTop: '15px', width: '100%'}}>MAIN MENU</button>
           </div>
         </div>
@@ -570,7 +945,7 @@ export default function GameCanvas() {
             <h1 className="neon-text" style={{color: '#00ff88', textShadow: '0 0 20px #00ff88'}}>MISSION ACCOMPLISHED</h1>
             <p>Level <span className="highlight">{finalWave}</span> Cleared!</p>
             <p>All hostiles eliminated.</p>
-            <button onClick={() => startGame(finalWave + 1)} className="glow-on-hover">START NEXT LEVEL</button>
+            <button onClick={() => startGame(currentLevel)} className="glow-on-hover">START NEXT LEVEL ({currentLevel})</button>
             <button onClick={quitGameFromGameOver} className="btn-secondary" style={{display: 'block', marginTop: '15px', width: '100%'}}>RETURN TO BASE</button>
           </div>
         </div>

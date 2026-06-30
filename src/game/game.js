@@ -1,4 +1,5 @@
 import { Player, Enemy, Projectile, Particle, Star, Missile } from './entities.js';
+import soundManagerInstance from '../audio/SoundManager';
 
 export class Game {
   constructor(canvas, shipConfig = null) {
@@ -161,7 +162,7 @@ export class Game {
       'shadow-stealth-spectre': { id: 'drone-helper', name: 'Drone Helpers', cd: 12, dur: 10, color: '#7b2fff' },
       'gold-eagle': { id: 'deflector-shield', name: 'Mirror Shield', cd: 12, dur: 5, color: '#ffd700' },
       'reaper': { id: 'laser-beam', name: 'Plasma Laser', cd: 10, dur: 5, color: '#ff0033' },
-      'ship-5': { id: 'drone-helper', name: 'Dual Drones', cd: 12, dur: 10, color: '#00ff00' },
+      'ship-5': { id: 'drone-helper', name: 'Quad Heavy Drones', cd: 12, dur: 10, color: '#00ff00' },
       'white-titan-vulcan': { id: 'solar-flare', name: 'Solar Flare', cd: 15, dur: 2.5, color: '#ffffff' }
     };
     
@@ -176,7 +177,7 @@ export class Game {
     this.abilityActiveTimer = 0;
     this.abilityActive = false;
     this.abilityState = {};
-    
+
     this.updateHUD();
   }
 
@@ -198,6 +199,8 @@ export class Game {
 
   stop() {
     this.isRunning = false;
+    // Stop boss alarm if it was playing (player died during a boss fight)
+    if (soundManagerInstance) soundManagerInstance.stopBossAlarm();
     window.dispatchEvent(new CustomEvent('game-over', { detail: { wave: this.wave, money: this.money } }));
   }
 
@@ -292,7 +295,10 @@ export class Game {
 
 
   updateHUD() {
-    console.log('updateHUD called, wave:', this.wave, 'money:', this.money);
+    console.log('updateHUD called, level:', this.level, 'wave:', this.wave, 'money:', this.money);
+    const levelEl = document.getElementById('current-level');
+    if (levelEl) levelEl.textContent = this.level || '1';
+
     const waveEl = document.getElementById('current-wave');
     if (waveEl) waveEl.textContent = this.wave || '1';
 
@@ -305,6 +311,33 @@ export class Game {
       const percentage = Math.max(0, (this.player.hp / this.player.maxHp) * 100);
       hpFill.style.width = `${percentage}%`;
       if (hpText) hpText.textContent = `${Math.max(0, Math.round(this.player.hp))} / ${this.player.maxHp}`;
+    }
+
+    // Boss HP bar updates
+    const activeBoss = this.enemies.find(e => e.hp > 0 && (e.isLevelBoss || e.isBoss));
+    const bossContainer = document.getElementById('boss-hp-container');
+    const bossFill = document.getElementById('boss-hp-bar');
+    const bossText = document.getElementById('boss-hp-text');
+    const bossName = document.getElementById('boss-hp-name');
+
+    if (activeBoss) {
+      if (bossContainer) {
+        bossContainer.style.display = 'flex';
+      }
+      if (bossName) {
+        bossName.textContent = activeBoss.isLevelBoss ? `LEVEL ${this.level} BOSS` : `WAVE ${this.wave} BOSS`;
+      }
+      if (bossFill) {
+        const pct = Math.max(0, (activeBoss.hp / activeBoss.maxHp) * 100);
+        bossFill.style.width = `${pct}%`;
+      }
+      if (bossText) {
+        bossText.textContent = `${Math.max(0, Math.round(activeBoss.hp))} / ${activeBoss.maxHp}`;
+      }
+    } else {
+      if (bossContainer) {
+        bossContainer.style.display = 'none';
+      }
     }
   }
 
@@ -330,6 +363,11 @@ export class Game {
     if (this.enemiesSpawnedThisWave === bossThreshold && !this.isBossSpawned) {
       this.isBossSpawned = true;
       this.enemies.push(new Enemy(this.virtualCanvas, this.width/2, -100, true, this.wave, false, this.level));
+      this.updateHUD();
+      // Play boss warning alarm MP3
+      if (soundManagerInstance && !soundManagerInstance.isMuted) {
+        soundManagerInstance.playBossAlarm();
+      }
     }
   }
 
@@ -442,6 +480,8 @@ export class Game {
 
               if (enemy.isLevelBoss) {
                 // Level Boss Defeated -> Level Complete
+                // Stop the looping alarm immediately
+                if (soundManagerInstance) soundManagerInstance.stopBossAlarm();
                 this.isRunning = false;
                 window.dispatchEvent(new CustomEvent('level-complete', { detail: { level: this.level, money: this.money } }));
                 return;
@@ -451,6 +491,8 @@ export class Game {
                 if (this.wave >= this.targetWave) {
                   if (!this.isLevelBossActive) {
                     // Final Wave Boss Defeated -> Spawn Level Boss
+                    // Stop wave boss alarm — level boss spawn will restart it
+                    if (soundManagerInstance) soundManagerInstance.stopBossAlarm();
                     this.isLevelBossActive = true;
                     this.enemies = []; // wipe normal enemies
                     this.projectiles = []; // wipe normal projectiles
@@ -458,10 +500,16 @@ export class Game {
                     this.enemies.push(new Enemy(this.virtualCanvas, this.width/2, -150, false, this.level, true, this.level));
                     this.player.hp = Math.min(this.player.maxHp, this.player.hp + 100); // big heal before boss
                     this.updateHUD();
+                    // Play boss warning alarm MP3
+                    if (soundManagerInstance && !soundManagerInstance.isMuted) {
+                      soundManagerInstance.playBossAlarm();
+                    }
                     return;
                   }
                 }
                 
+                // Wave boss defeated (non-final wave) — stop alarm, next wave begins
+                if (soundManagerInstance) soundManagerInstance.stopBossAlarm();
                 this.wave++;
                 this.enemiesSpawnedThisWave = 0;
                 this.isBossSpawned = false;
@@ -543,6 +591,12 @@ export class Game {
     // Player fire
     if (time - this.player.lastShotTime > this.player.shootCooldown) {
       this.player.lastShotTime = time;
+
+      // Play synthesized shooting sound effect (whenever globally unmuted)
+      if (soundManagerInstance && soundManagerInstance.audioCtx && !soundManagerInstance.isMuted) {
+        soundManagerInstance.createLaserShoot();
+      }
+
       const d = this.player.damageMultiplier;
       const color = this.player.color;
       const style = 'spread';
@@ -624,14 +678,57 @@ export class Game {
             this.missiles.push(new Missile(enemy.x, enemy.y + 160, this.player));
           }
         } else if (enemy.isBoss) {
-          if (bulletCount === 2) {
+          // Custom Wave Boss rules based on level and current wave (early: 2 bullets, mid: 3 bullets, final: 3 bullets + homing missile)
+          const waveBossConfigs = {
+            1: { early: [1, 2], mid: [3, 4], final: [5, 5], dmg: 5 },
+            2: { early: [1, 3], mid: [4, 6], final: [7, 7], dmg: 7 },
+            3: { early: [1, 3], mid: [4, 6], final: [7, 8], dmg: 7 },
+            4: { early: [1, 3], mid: [4, 6], final: [7, 9], dmg: 8 },
+            5: { early: [1, 4], mid: [5, 8], final: [9, 10], dmg: 9 },
+            6: { early: [1, 4], mid: [5, 8], final: [9, 10], dmg: 10 },
+            7: { early: [1, 4], mid: [5, 8], final: [9, 11], dmg: 11 },
+            8: { early: [1, 5], mid: [6, 9], final: [10, 12], dmg: 12 },
+            9: { early: [1, 5], mid: [6, 9], final: [10, 13], dmg: 13 },
+            10: { early: [1, 5], mid: [6, 10], final: [11, 15], dmg: 15 }
+          };
+
+          const lvl = enemy.level || this.level || 1;
+          const currentWave = enemy.wave || this.wave || 1;
+          const cfg = waveBossConfigs[lvl] || { early: [1, 2], mid: [3, 4], final: [5, 5], dmg: 5 };
+          const waveBossDmg = cfg.dmg;
+
+          // Determine pattern: 'early', 'mid', or 'final'
+          let pattern = 'early';
+          if (currentWave >= cfg.early[0] && currentWave <= cfg.early[1]) {
+            pattern = 'early';
+          } else if (currentWave >= cfg.mid[0] && currentWave <= cfg.mid[1]) {
+            pattern = 'mid';
+          } else if (currentWave >= cfg.final[0] && currentWave <= cfg.final[1]) {
+            pattern = 'final';
+          }
+
+          if (pattern === 'early') {
+            // 2 bullets: parallel downward
             this.projectiles.push(new Projectile(enemy.x - 30, enemy.y + 100, 0, 500, true, c, waveBossDmg, 'spread'));
             this.projectiles.push(new Projectile(enemy.x + 30, enemy.y + 100, 0, 500, true, c, waveBossDmg, 'spread'));
           } else {
-            this.projectiles.push(new Projectile(enemy.x - 60, enemy.y + 100, 0, 500, true, c, waveBossDmg, 'spread'));
-            this.projectiles.push(new Projectile(enemy.x - 20, enemy.y + 100, 0, 500, true, c, waveBossDmg, 'spread'));
-            this.projectiles.push(new Projectile(enemy.x + 20, enemy.y + 100, 0, 500, true, c, waveBossDmg, 'spread'));
-            this.projectiles.push(new Projectile(enemy.x + 60, enemy.y + 100, 0, 500, true, c, waveBossDmg, 'spread'));
+            // 'mid' or 'final': 3 bullets downward V-spread
+            const angles = [-15, 0, 15];
+            const offsets = [-30, 0, 30];
+            const bossSpeed = 500;
+            for (let i = 0; i < 3; i++) {
+              const rad = (angles[i] + 90) * Math.PI / 180;
+              this.projectiles.push(new Projectile(
+                enemy.x + offsets[i], enemy.y + 100,
+                Math.cos(rad) * bossSpeed, Math.sin(rad) * bossSpeed,
+                true, c, waveBossDmg, 'spread'
+              ));
+            }
+
+            // 'final' also fires a homing missile with matching damage (except Level 1)
+            if (pattern === 'final' && lvl > 1) {
+              this.missiles.push(new Missile(enemy.x, enemy.y + 120, this.player, waveBossDmg));
+            }
           }
         } else {
           // Small enemy troops
@@ -715,8 +812,12 @@ export class Game {
       case 'drone-helper': {
         this.abilityState = {
           drones: [
-            { offset: { x: -80, y: 10 }, lastShot: 0, angle: 0 },
-            { offset: { x: 80, y: 10 }, lastShot: 0, angle: Math.PI }
+            // Left side — front and rear
+            { offset: { x: -90,  y: -30 }, lastShot: 0, angle: 0 },
+            { offset: { x: -115, y:  35 }, lastShot: 0, angle: Math.PI },
+            // Right side — front and rear
+            { offset: { x:  90,  y: -30 }, lastShot: 0, angle: 0 },
+            { offset: { x:  115, y:  35 }, lastShot: 0, angle: Math.PI }
           ]
         };
         break;
@@ -842,7 +943,7 @@ export class Game {
         if (this.abilityState.damageTimer >= 0.1) {
           this.abilityState.damageTimer = 0;
           const laserX = this.player.x;
-          const laserWidth = 60;
+          const laserWidth = 45;
           this.enemies.forEach(enemy => {
             if (Math.abs(enemy.x - laserX) < (enemy.width/2 + laserWidth/2) && enemy.y < this.player.y) {
               enemy.hp -= 50 * this.player.damageMultiplier;
@@ -1192,18 +1293,8 @@ export class Game {
 
     switch (this.abilityType) {
       case 'laser-beam': {
-        ctx.save();
-        const laserX = this.player.x;
-        const startY = this.player.y - 30;
-        const laserWidth = 50 + Math.random() * 20;
-        ctx.fillStyle = 'rgba(0, 255, 0, 0.3)';
-        ctx.shadowBlur = 30;
-        ctx.shadowColor = '#00ff00';
-        ctx.fillRect(laserX - laserWidth/2, 0, laserWidth, startY);
-        ctx.fillStyle = '#ffffff';
-        ctx.shadowBlur = 0;
-        ctx.fillRect(laserX - laserWidth/4, 0, laserWidth/2, startY);
-        ctx.restore();
+        // Laser is drawn BEFORE the player in the main loop so the ship renders on top.
+        // Nothing to draw here.
         break;
       }
 
@@ -1513,9 +1604,39 @@ export class Game {
       this.projectiles.forEach(p => p.draw(this.ctx));
       this.missiles.forEach(m => m.draw(this.ctx));
       this.enemies.forEach(e => e.draw(this.ctx));
+      // Draw laser-beam BEHIND the player so the ship sits on top of it
+      if (this.abilityActive && this.abilityType === 'laser-beam' && this.player) {
+        const ctx = this.ctx;
+        ctx.save();
+        const laserX = this.player.x;
+        // Dynamic offset to match the ship's nose tip (reaper has more padding at the top of its PNG)
+        const offset = this.player.id === 'reaper' ? 30 : 75;
+        const startY = this.player.y - offset;
+        const laserWidth = 35 + Math.random() * 15;
+
+        // Dynamic color support based on active ship color (green for Spectre, red for Reaper)
+        const baseColor = this.abilityColor || '#00ff00';
+        let glowColor = 'rgba(0, 255, 0, 0.3)';
+        if (baseColor.startsWith('#')) {
+          const r = parseInt(baseColor.slice(1, 3), 16);
+          const g = parseInt(baseColor.slice(3, 5), 16);
+          const b = parseInt(baseColor.slice(5, 7), 16);
+          glowColor = `rgba(${r}, ${g}, ${b}, 0.3)`;
+        }
+
+        ctx.fillStyle = glowColor;
+        ctx.shadowBlur = 30;
+        ctx.shadowColor = baseColor;
+        ctx.fillRect(laserX - laserWidth / 2, 0, laserWidth, startY);
+        ctx.fillStyle = '#ffffff';
+        ctx.shadowBlur = 0;
+        ctx.fillRect(laserX - laserWidth / 4, 0, laserWidth / 2, startY);
+        ctx.restore();
+      }
+
       if (this.player) this.player.draw(this.ctx);
 
-      // Draw ability visual effects on top
+      // Draw all other ability visual effects on top of the player
       this.drawAbility(this.ctx, dt);
 
       // Restore drawing context state

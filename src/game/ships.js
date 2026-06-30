@@ -814,41 +814,68 @@ export const SHIPS = [
     draw: function(ctx, width, height, color) {
       if (!this._img) { this._img = new Image(); this._img.src = '/player craftship/White_Titan_Vulcan.png'; }
       if (this._img.complete && this._img.naturalWidth > 0) {
-        ctx.save();
         const flicker = 0.8 + Math.random() * 0.4;
-        const flameLength = height * 0.6 * flicker;
-        const nozzleOffset = width * 0.12;
-        const startY = height * 0.35;
-        const flameWidth = width * 0.14;
-
         const colors = getFlameColors(color || this.color);
 
-        const drawFlame = (xPosition) => {
+        // 1. Draw outer flames BEHIND the ship
+        ctx.save();
+        const flameLengthOuter = height * 0.62 * flicker;
+        const startYOuter = height * 0.66;
+        const flameWidthOuter = width * 0.12;
+
+        const drawOuterFlame = (xPosition, lengthVal, widthScale = 1.0) => {
+          const currentWidth = flameWidthOuter * widthScale;
           ctx.beginPath();
-          ctx.moveTo(xPosition - flameWidth/2, startY);
-          ctx.quadraticCurveTo(xPosition - flameWidth/4, startY + flameLength, xPosition, startY + flameLength * 1.2);
-          ctx.quadraticCurveTo(xPosition + flameWidth/4, startY + flameLength, xPosition + flameWidth/2, startY);
+          ctx.moveTo(xPosition - currentWidth/2, startYOuter);
+          ctx.quadraticCurveTo(xPosition - currentWidth/4, startYOuter + lengthVal, xPosition, startYOuter + lengthVal * 1.2);
+          ctx.quadraticCurveTo(xPosition + currentWidth/4, startYOuter + lengthVal, xPosition + currentWidth/2, startYOuter);
           ctx.closePath();
           ctx.fillStyle = colors.outer;
           ctx.shadowBlur = 20;
           ctx.shadowColor = colors.shadow;
           ctx.fill();
+        };
 
+        drawOuterFlame(-width * 0.27, flameLengthOuter, 0.7);       // 1: Left Outer (thinner scale 0.7)
+        drawOuterFlame(-width * 0.14, flameLengthOuter * 0.8);        // 2: Left Inner (default 1.0)
+        drawOuterFlame(width * 0.14, flameLengthOuter * 0.8);         // 4: Right Inner (default 1.0)
+        drawOuterFlame(width * 0.27, flameLengthOuter, 0.7);        // 3: Right Outer (thinner scale 0.7, shifted slightly left to 0.27)
+        ctx.restore();
+
+        // 2. Draw the ship image
+        ctx.drawImage(this._img, -width * 1.0, -height * 1.0, width * 2.0, height * 2.0);
+
+        // 3. Draw the inner flames/cores ON TOP of the ship (emerging through the thrusters)
+        ctx.save();
+        const flameLengthInner = height * 0.3 * flicker;
+        const flameWidthInner = width * 0.07;
+
+        const drawInnerFlame = (xPosition, yStart, lengthVal, widthScale = 1.0) => {
+          const currentWidth = flameWidthInner * widthScale;
           ctx.beginPath();
-          ctx.moveTo(xPosition - flameWidth/3, startY);
-          ctx.quadraticCurveTo(xPosition, startY + flameLength * 0.8, xPosition + flameWidth/3, startY);
+          ctx.moveTo(xPosition - currentWidth/2, yStart);
+          ctx.quadraticCurveTo(xPosition - currentWidth/4, yStart + lengthVal, xPosition, yStart + lengthVal * 1.2);
+          ctx.quadraticCurveTo(xPosition + currentWidth/4, yStart + lengthVal, xPosition + currentWidth/2, yStart);
           ctx.closePath();
           ctx.fillStyle = colors.inner;
           ctx.shadowBlur = 10;
           ctx.shadowColor = colors.innerShadow;
           ctx.fill();
+
+          // White-hot core
+          ctx.beginPath();
+          ctx.moveTo(xPosition - currentWidth/3, yStart);
+          ctx.quadraticCurveTo(xPosition, yStart + lengthVal * 0.6, xPosition + currentWidth/3, yStart);
+          ctx.closePath();
+          ctx.fillStyle = '#ffffff';
+          ctx.fill();
         };
 
-        drawFlame(-nozzleOffset);
-        drawFlame(nozzleOffset);
+        drawInnerFlame(-width * 0.27, height * 0.66, flameLengthInner, 0.7);       // 1: Left Outer (thinner scale 0.7, shifted slightly right to -0.27)
+        drawInnerFlame(-width * 0.14, height * 0.66, flameLengthInner * 0.8);        // 2: Left Inner (default 1.0)
+        drawInnerFlame(width * 0.14, height * 0.66, flameLengthInner * 0.8);         // 4: Right Inner (default 1.0)
+        drawInnerFlame(width * 0.27, height * 0.66, flameLengthInner, 0.7);        // 3: Right Outer (thinner scale 0.7, shifted slightly left to 0.27)
         ctx.restore();
-
-        ctx.drawImage(this._img, -width * 1.0, -height * 1.0, width * 2.0, height * 2.0);
       }
     }
   }
