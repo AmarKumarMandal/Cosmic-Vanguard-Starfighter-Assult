@@ -6,6 +6,28 @@ export class Game {
     this.canvas = canvas;
     this.ctx = this.canvas.getContext('2d');
     this.shipConfig = shipConfig;
+
+    // Intercept Canvas shadowBlur setter to optimize performance dynamically based on quality settings
+    const ctxProto = Object.getPrototypeOf(this.ctx);
+    const originalShadowBlur = Object.getOwnPropertyDescriptor(ctxProto, 'shadowBlur');
+    if (originalShadowBlur && originalShadowBlur.set) {
+      const game = this;
+      Object.defineProperty(this.ctx, 'shadowBlur', {
+        get() {
+          return originalShadowBlur.get.call(this);
+        },
+        set(value) {
+          if (game.qualitySettings && !game.qualitySettings.shadows) {
+            originalShadowBlur.set.call(this, 0);
+          } else if (game.qualitySettings && typeof game.qualitySettings.shadowBlur === 'number') {
+            originalShadowBlur.set.call(this, Math.min(value, game.qualitySettings.shadowBlur));
+          } else {
+            originalShadowBlur.set.call(this, value);
+          }
+        },
+        configurable: true
+      });
+    }
     
     // Fixed Virtual Resolution setup (1600x900 coordinate space)
     this.width = 1600;
@@ -112,16 +134,54 @@ export class Game {
       this.input.touchTarget = null;
     });
 
+    // Object Pooling arrays
+    this.projectilePool = [];
+    this.enemyPool = [];
+    this.particlePool = [];
+
+    // Quality scaling defaults
+    this.quality = 'high';
+    this.qualitySettings = {
+      shadows: true,
+      shadowBlur: 15,
+      maxProjectiles: 400,
+      particleMultiplier: 1.0,
+      maxParticles: 400,
+      starCount: 100,
+      exhaustDetail: 1.0
+    };
+
+    // FPS monitoring and dynamic alerts
+    this.lowFpsTimer = 0;
+    this.notificationText = '';
+    this.notificationTimer = 0;
+
+    // Auto-detect mobile devices for initial quality scaling
+    if (typeof window !== 'undefined') {
+      const ua = navigator.userAgent.toLowerCase();
+      const isMobile = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(ua)
+        || (window.innerWidth < 1024 && ('ontouchstart' in window || navigator.maxTouchPoints > 0));
+      this.setQuality(isMobile ? 'medium' : 'high');
+    } else {
+      this.setQuality('high');
+    }
+
     this.reset();
   }
 
   reset(level = 1) {
     this.player = new Player(this.virtualCanvas, this.shipConfig);
+    
+    // Recycle active elements to pools
+    if (this.enemies) this.enemyPool.push(...this.enemies);
+    if (this.projectiles) this.projectilePool.push(...this.projectiles);
+    if (this.particles) this.particlePool.push(...this.particles);
+
     this.enemies = [];
     this.projectiles = [];
     this.particles = [];
     this.missiles = [];
-    this.stars = Array.from({length: 100}, () => new Star(this.virtualCanvas));
+    this.stars = Array.from({length: this.qualitySettings.starCount}, () => new Star(this.virtualCanvas));
     
     this.level = level;
     this.wave = 1;
@@ -179,6 +239,108 @@ export class Game {
     this.abilityState = {};
 
     this.updateHUD();
+  }
+
+  setQuality(profile) {
+    this.quality = profile;
+    if (profile === 'low') {
+      this.qualitySettings = {
+        shadows: false,
+        maxProjectiles: 120,
+        particleMultiplier: 0.15,
+        maxParticles: 50,
+        starCount: 30,
+        exhaustDetail: 0.3
+      };
+    } else if (profile === 'medium') {
+      this.qualitySettings = {
+        shadows: true,
+        shadowBlur: 5,
+        maxProjectiles: 200,
+        particleMultiplier: 0.5,
+        maxParticles: 150,
+        starCount: 60,
+        exhaustDetail: 0.7
+      };
+    } else {
+      this.qualitySettings = {
+        shadows: true,
+        shadowBlur: 15,
+        maxProjectiles: 400,
+        particleMultiplier: 1.0,
+        maxParticles: 400,
+        starCount: 100,
+        exhaustDetail: 1.0
+      };
+    }
+    if (typeof window !== 'undefined') {
+      window.__spaceWarQualitySettings = this.qualitySettings;
+    }
+    // Adjust star array size dynamically
+    if (this.stars) {
+      const targetCount = this.qualitySettings.starCount;
+      if (this.stars.length < targetCount) {
+        while (this.stars.length < targetCount) {
+          this.stars.push(new Star(this.virtualCanvas));
+        }
+      } else if (this.stars.length > targetCount) {
+        this.stars.length = targetCount;
+      }
+    }
+  }
+
+  getProjectile(x, y, vx, vy, isEnemy, color = null, damageMultiplier = 1, style = 'default') {
+    if (this.projectiles.length >= this.qualitySettings.maxProjectiles) {
+      // Hard cap reached: recycle oldest active projectile to prevent memory overflow
+      const oldest = this.projectiles.shift();
+      if (oldest) {
+        oldest.init(x, y, vx, vy, isEnemy, color, damageMultiplier, style);
+        this.projectiles.push(oldest);
+        return oldest;
+      }
+    }
+    if (this.projectilePool.length > 0) {
+      const proj = this.projectilePool.pop();
+      proj.init(x, y, vx, vy, isEnemy, color, damageMultiplier, style);
+      this.projectiles.push(proj);
+      return proj;
+    }
+    const proj = new Projectile(x, y, vx, vy, isEnemy, color, damageMultiplier, style);
+    this.projectiles.push(proj);
+    return proj;
+  }
+
+  getEnemy(x, y, isBoss = false, wave = 1, isLevelBoss = false, level = 1) {
+    if (this.enemyPool.length > 0) {
+      const enemy = this.enemyPool.pop();
+      enemy.init(this.virtualCanvas, x, y, isBoss, wave, isLevelBoss, level);
+      this.enemies.push(enemy);
+      return enemy;
+    }
+    const enemy = new Enemy(this.virtualCanvas, x, y, isBoss, wave, isLevelBoss, level);
+    this.enemies.push(enemy);
+    return enemy;
+  }
+
+  getParticle(x, y, color) {
+    if (this.particles.length >= this.qualitySettings.maxParticles) {
+      // Hard cap reached: recycle oldest active particle
+      const oldest = this.particles.shift();
+      if (oldest) {
+        oldest.init(x, y, color);
+        this.particles.push(oldest);
+        return oldest;
+      }
+    }
+    if (this.particlePool.length > 0) {
+      const part = this.particlePool.pop();
+      part.init(x, y, color);
+      this.particles.push(part);
+      return part;
+    }
+    const part = new Particle(x, y, color);
+    this.particles.push(part);
+    return part;
   }
 
   start(level = 1) {
@@ -355,14 +517,14 @@ export class Game {
     if (this.enemiesSpawnedThisWave < totalEnemies && this.enemySpawnTimer > Math.max(0.5, 2.0 - (this.wave * 0.15))) {
       this.enemySpawnTimer = 0;
       const x = Math.random() * (this.width - 80) + 40;
-      this.enemies.push(new Enemy(this.virtualCanvas, x, -50, false, this.wave, false, this.level));
+      this.getEnemy(x, -50, false, this.wave, false, this.level);
       this.enemiesSpawnedThisWave++;
     }
 
     // Boss appears when exactly 20 small enemies are left
     if (this.enemiesSpawnedThisWave === bossThreshold && !this.isBossSpawned) {
       this.isBossSpawned = true;
-      this.enemies.push(new Enemy(this.virtualCanvas, this.width/2, -100, true, this.wave, false, this.level));
+      this.getEnemy(this.width/2, -100, true, this.wave, false, this.level);
       this.updateHUD();
       // Play boss warning alarm MP3
       if (soundManagerInstance && !soundManagerInstance.isMuted) {
@@ -497,7 +659,7 @@ export class Game {
                     this.enemies = []; // wipe normal enemies
                     this.projectiles = []; // wipe normal projectiles
                     // Spawn Level Boss
-                    this.enemies.push(new Enemy(this.virtualCanvas, this.width/2, -150, false, this.level, true, this.level));
+                    this.getEnemy(this.width/2, -150, false, this.level, true, this.level);
                     this.player.hp = Math.min(this.player.maxHp, this.player.hp + 100); // big heal before boss
                     this.updateHUD();
                     // Play boss warning alarm MP3
@@ -555,13 +717,13 @@ export class Game {
         if (this.abilityActive && this.abilityType === 'deflector-shield') {
           // Deflect missile back as a player bullet!
           missile.markedForDeletion = true;
-          this.projectiles.push(new Projectile(
+          this.getProjectile(
             missile.x, missile.y,
             0, -600,
             false, '#ffd700',
             this.player.damageMultiplier * 6.0,
             'spread'
-          ));
+          );
           this.createExplosion(missile.x, missile.y, '#ffd700', 25);
         } else if (this.player.isInvulnerable) {
           missile.markedForDeletion = true;
@@ -579,8 +741,9 @@ export class Game {
 
 
   createExplosion(x, y, color, count) {
-    for (let i = 0; i < count; i++) {
-      this.particles.push(new Particle(x, y, color));
+    const adjustedCount = Math.max(1, Math.round(count * this.qualitySettings.particleMultiplier));
+    for (let i = 0; i < adjustedCount; i++) {
+      this.getParticle(x, y, color);
     }
   }
 
@@ -589,8 +752,8 @@ export class Game {
     const bulletCount = this.wave <= 2 ? 2 : 4; // waves 1-2: 2 bullets, waves 3-4: 4 bullets
     
     // Player fire
-    if (time - this.player.lastShotTime > this.player.shootCooldown) {
-      this.player.lastShotTime = time;
+    if (this.player.shootTimer >= this.player.shootCooldown / 1000) {
+      this.player.shootTimer -= this.player.shootCooldown / 1000;
 
       // Play synthesized shooting sound effect (whenever globally unmuted)
       if (soundManagerInstance && soundManagerInstance.audioCtx && !soundManagerInstance.isMuted) {
@@ -608,7 +771,7 @@ export class Game {
         const offsets = [-20, 0, 20];
         for (let i = 0; i < 3; i++) {
           const rad = (angles[i] - 90) * Math.PI / 180;
-          this.projectiles.push(new Projectile(this.player.x + offsets[i], this.player.y - 20, Math.cos(rad) * speed, Math.sin(rad) * speed, false, color, d, style));
+          this.getProjectile(this.player.x + offsets[i], this.player.y - 20, Math.cos(rad) * speed, Math.sin(rad) * speed, false, color, d, style);
         }
       } else {
         // 5 bullets: -24, -12, 0, 12, 24 deg
@@ -616,31 +779,32 @@ export class Game {
         const offsets = [-30, -15, 0, 15, 30];
         for (let i = 0; i < 5; i++) {
           const rad = (angles[i] - 90) * Math.PI / 180;
-          this.projectiles.push(new Projectile(this.player.x + offsets[i], this.player.y - 20, Math.cos(rad) * speed, Math.sin(rad) * speed, false, color, d, style));
+          this.getProjectile(this.player.x + offsets[i], this.player.y - 20, Math.cos(rad) * speed, Math.sin(rad) * speed, false, color, d, style);
         }
       }
     }
 
     // Reaper wing-mounted missiles (Fired slower, travels slower, with independent cooldown)
     if (this.player.id === 'reaper') {
-      if (typeof this.player.lastMissileTime === 'undefined') {
-        this.player.lastMissileTime = 0;
+      if (typeof this.player.missileTimer === 'undefined') {
+        this.player.missileTimer = 999;
       }
-      const missileCooldown = 800; // ms between missile shots (delays)
-      if (time - this.player.lastMissileTime > missileCooldown) {
-        this.player.lastMissileTime = time;
+      this.player.missileTimer += dt;
+      const missileCooldown = 0.8; // seconds
+      if (this.player.missileTimer >= missileCooldown) {
+        this.player.missileTimer -= missileCooldown;
         const d = this.player.damageMultiplier;
         const color = this.player.color;
         // Launch 2 sting missiles spaced 100px apart (50px from center in each direction), with slower speed (-450 velocity)
-        this.projectiles.push(new Projectile(this.player.x - 50, this.player.y - 10, 0, -450, false, color, d, 'sting_missile'));
-        this.projectiles.push(new Projectile(this.player.x + 50, this.player.y - 10, 0, -450, false, color, d, 'sting_missile'));
+        this.getProjectile(this.player.x - 50, this.player.y - 10, 0, -450, false, color, d, 'sting_missile');
+        this.getProjectile(this.player.x + 50, this.player.y - 10, 0, -450, false, color, d, 'sting_missile');
       }
     }
 
     // Enemy fire
     this.enemies.forEach(enemy => {
-      if (time - enemy.lastShotTime > enemy.shootCooldown) {
-        enemy.lastShotTime = time;
+      if (enemy.shootTimer >= enemy.shootCooldown / 1000) {
+        enemy.shootTimer -= enemy.shootCooldown / 1000;
         const c = '#a020f0'; // Purple spread
 
         // Scale enemy bullet damage dynamically based on current level
@@ -666,11 +830,11 @@ export class Game {
           const bossSpeed = 500;
           for (let i = 0; i < 5; i++) {
             const rad = (angles[i] + 90) * Math.PI / 180;
-            this.projectiles.push(new Projectile(
+            this.getProjectile(
               enemy.x + offsets[i], enemy.y + 140,
               Math.cos(rad) * bossSpeed, Math.sin(rad) * bossSpeed,
               true, c, levelBossDmg, 'spread'
-            ));
+            );
           }
           // Homing missile based on boss config
           if (enemy.hasHoming && time - this.lastMissileTime > this.missileCooldown) {
@@ -709,8 +873,8 @@ export class Game {
 
           if (pattern === 'early') {
             // 2 bullets: parallel downward
-            this.projectiles.push(new Projectile(enemy.x - 30, enemy.y + 100, 0, 500, true, c, waveBossDmg, 'spread'));
-            this.projectiles.push(new Projectile(enemy.x + 30, enemy.y + 100, 0, 500, true, c, waveBossDmg, 'spread'));
+            this.getProjectile(enemy.x - 30, enemy.y + 100, 0, 500, true, c, waveBossDmg, 'spread');
+            this.getProjectile(enemy.x + 30, enemy.y + 100, 0, 500, true, c, waveBossDmg, 'spread');
           } else {
             // 'mid' or 'final': 3 bullets downward V-spread
             const angles = [-15, 0, 15];
@@ -718,11 +882,11 @@ export class Game {
             const bossSpeed = 500;
             for (let i = 0; i < 3; i++) {
               const rad = (angles[i] + 90) * Math.PI / 180;
-              this.projectiles.push(new Projectile(
+              this.getProjectile(
                 enemy.x + offsets[i], enemy.y + 100,
                 Math.cos(rad) * bossSpeed, Math.sin(rad) * bossSpeed,
                 true, c, waveBossDmg, 'spread'
-              ));
+              );
             }
 
             // 'final' also fires a homing missile with matching damage (except Level 1)
@@ -736,13 +900,13 @@ export class Game {
           const enemyBulletCount = this.wave <= 4 ? 2 : 4;
 
           if (enemyBulletCount === 2) {
-            this.projectiles.push(new Projectile(enemy.x - 15, enemy.y + 20, 0, speedY, true, c, smallDmg, 'spread'));
-            this.projectiles.push(new Projectile(enemy.x + 15, enemy.y + 20, 0, speedY, true, c, smallDmg, 'spread'));
+            this.getProjectile(enemy.x - 15, enemy.y + 20, 0, speedY, true, c, smallDmg, 'spread');
+            this.getProjectile(enemy.x + 15, enemy.y + 20, 0, speedY, true, c, smallDmg, 'spread');
           } else {
-            this.projectiles.push(new Projectile(enemy.x - 20, enemy.y + 20, 0, speedY, true, c, smallDmg, 'spread'));
-            this.projectiles.push(new Projectile(enemy.x - 7,  enemy.y + 20, 0, speedY, true, c, smallDmg, 'spread'));
-            this.projectiles.push(new Projectile(enemy.x + 7,  enemy.y + 20, 0, speedY, true, c, smallDmg, 'spread'));
-            this.projectiles.push(new Projectile(enemy.x + 20, enemy.y + 20, 0, speedY, true, c, smallDmg, 'spread'));
+            this.getProjectile(enemy.x - 20, enemy.y + 20, 0, speedY, true, c, smallDmg, 'spread');
+            this.getProjectile(enemy.x - 7,  enemy.y + 20, 0, speedY, true, c, smallDmg, 'spread');
+            this.getProjectile(enemy.x + 7,  enemy.y + 20, 0, speedY, true, c, smallDmg, 'spread');
+            this.getProjectile(enemy.x + 20, enemy.y + 20, 0, speedY, true, c, smallDmg, 'spread');
           }
         }
       }
@@ -1546,6 +1710,28 @@ export class Game {
     if (dt > 0.1) dt = 0.1; // Cap dt for lagging
     this.lastTime = timestamp;
 
+    // Track FPS and dynamically scale down graphics if lagging
+    if (this.quality !== 'low') {
+      const fps = 1 / dt;
+      if (fps < 40) {
+        this.lowFpsTimer += dt;
+        if (this.lowFpsTimer >= 3.0) { // 3 seconds of sustained low FPS
+          this.lowFpsTimer = 0;
+          if (this.quality === 'high') {
+            this.setQuality('medium');
+            this.notificationText = 'PERFORMANCE OPTIMIZED: MEDIUM QUALITY';
+            this.notificationTimer = 3.0;
+          } else if (this.quality === 'medium') {
+            this.setQuality('low');
+            this.notificationText = 'PERFORMANCE OPTIMIZED: LOW QUALITY';
+            this.notificationTimer = 3.0;
+          }
+        }
+      } else {
+        this.lowFpsTimer = Math.max(0, this.lowFpsTimer - dt * 0.5);
+      }
+    }
+
     try {
       // Emergency canvas size fallback
       if (!this.canvas.width || this.canvas.width === 0) {
@@ -1583,10 +1769,37 @@ export class Game {
       this.checkCollisions();
       this.checkMissileCollisions();
 
-      // Cleanup dead entities using logical coordinates
-      this.enemies = this.enemies.filter(e => e.hp > 0 && e.y < this.height + 100);
-      this.projectiles = this.projectiles.filter(p => !p.markedForDeletion && p.y > -50 && p.y < this.height + 50 && p.x > -50 && p.x < this.width + 50);
-      this.particles = this.particles.filter(p => p.life > 0);
+      // Cleanup dead entities using logical coordinates, returning them to the pools
+      const remainingEnemies = [];
+      this.enemies.forEach(e => {
+        if (e.hp > 0 && e.y < this.height + 100) {
+          remainingEnemies.push(e);
+        } else {
+          this.enemyPool.push(e);
+        }
+      });
+      this.enemies = remainingEnemies;
+
+      const remainingProjectiles = [];
+      this.projectiles.forEach(p => {
+        if (!p.markedForDeletion && p.y > -50 && p.y < this.height + 50 && p.x > -50 && p.x < this.width + 50) {
+          remainingProjectiles.push(p);
+        } else {
+          this.projectilePool.push(p);
+        }
+      });
+      this.projectiles = remainingProjectiles;
+
+      const remainingParticles = [];
+      this.particles.forEach(p => {
+        if (p.life > 0) {
+          remainingParticles.push(p);
+        } else {
+          this.particlePool.push(p);
+        }
+      });
+      this.particles = remainingParticles;
+
       this.missiles = this.missiles.filter(m => !m.markedForDeletion && m.y < this.height + 100);
 
       // Draw - First clear the entire physical canvas
@@ -1638,6 +1851,45 @@ export class Game {
 
       // Draw all other ability visual effects on top of the player
       this.drawAbility(this.ctx, dt);
+
+      // Draw performance optimization alerts if active
+      if (this.notificationTimer > 0) {
+        this.notificationTimer -= dt;
+        const ctx = this.ctx;
+        ctx.save();
+        ctx.fillStyle = 'rgba(11, 12, 16, 0.85)';
+        ctx.strokeStyle = '#66fcf1';
+        ctx.lineWidth = 2;
+        if (this.qualitySettings.shadows) {
+          ctx.shadowBlur = 15;
+          ctx.shadowColor = '#66fcf1';
+        }
+        
+        // Draw banner background in virtual coords (1600x900)
+        const bannerW = 600;
+        const bannerH = 50;
+        const bannerX = (this.width - bannerW) / 2;
+        const bannerY = 40;
+        
+        ctx.beginPath();
+        // Fallback for roundRect if not supported in all older browser engines
+        if (ctx.roundRect) {
+          ctx.roundRect(bannerX, bannerY, bannerW, bannerH, 8);
+        } else {
+          ctx.rect(bannerX, bannerY, bannerW, bannerH);
+        }
+        ctx.fill();
+        ctx.stroke();
+        
+        // Pulse text alpha
+        const pulse = 0.7 + Math.sin(timestamp * 0.01) * 0.3;
+        ctx.fillStyle = `rgba(102, 252, 241, ${pulse})`;
+        ctx.font = 'bold 22px Outfit, Inter, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(this.notificationText, this.width / 2, bannerY + bannerH / 2);
+        ctx.restore();
+      }
 
       // Restore drawing context state
       this.ctx.restore();
