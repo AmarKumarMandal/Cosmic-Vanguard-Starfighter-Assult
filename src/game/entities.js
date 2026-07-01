@@ -42,11 +42,9 @@ export class Player {
     this.vy = 0;
     this.hp = this.maxHp;
     this.lastShotTime = 0;
-    this.shootTimer = 999;
   }
 
   update(dt, input) {
-    this.shootTimer += dt;
     // Input handling (Case-insensitive check for WASD and Arrow keys)
     const left = input.keys['ArrowLeft'] || input.keys['arrowleft'] || input.keys['a'] || input.keys['A'];
     const right = input.keys['ArrowRight'] || input.keys['arrowright'] || input.keys['d'] || input.keys['D'];
@@ -140,10 +138,6 @@ export class Player {
 
 export class Enemy {
   constructor(canvas, x, y, isBoss = false, wave = 1, isLevelBoss = false, level = 1) {
-    this.init(canvas, x, y, isBoss, wave, isLevelBoss, level);
-  }
-
-  init(canvas, x, y, isBoss = false, wave = 1, isLevelBoss = false, level = 1) {
     this.canvas = canvas;
     this.isBoss = isBoss;
     this.isLevelBoss = isLevelBoss;
@@ -151,7 +145,6 @@ export class Enemy {
     this.wave = wave;
     this.x = x;
     this.y = y;
-    this.isDead = false;
 
     const tier = level + Math.floor((wave - 1) / 5);
 
@@ -238,7 +231,6 @@ export class Enemy {
     this.vy = this.isLevelBoss ? 15 : (this.isBoss ? 20 : 40);
 
     this.lastShotTime = 0;
-    this.shootTimer = Math.random() * (this.shootCooldown / 1000); // stagger initial shots
   }
 
   update(dt) {
@@ -251,7 +243,6 @@ export class Enemy {
       return; // Skip updates (movement/shooting) when frozen
     }
 
-    this.shootTimer += dt;
     this.x += this.vx * dt;
     this.y += this.vy * dt;
 
@@ -462,10 +453,6 @@ export class Enemy {
 
 export class Projectile {
   constructor(x, y, vx, vy, isEnemy, color = null, damageMultiplier = 1, style = 'default') {
-    this.init(x, y, vx, vy, isEnemy, color, damageMultiplier, style);
-  }
-
-  init(x, y, vx, vy, isEnemy, color = null, damageMultiplier = 1, style = 'default') {
     this.x = x;
     this.y = y;
     this.vx = vx;
@@ -785,10 +772,6 @@ export class Missile {
 
 export class Particle {
   constructor(x, y, color) {
-    this.init(x, y, color);
-  }
-
-  init(x, y, color) {
     this.x = x;
     this.y = y;
     this.vx = (Math.random() - 0.5) * 300;
@@ -804,26 +787,15 @@ export class Particle {
     this.life -= this.decay * dt;
   }
   draw(ctx) {
-    const settings = typeof window !== 'undefined' ? window.__spaceWarQualitySettings : null;
-    if (settings && !settings.shadows) {
-      // Fast hardware-accelerated solid block path (perfect for low-end mobile/tablet CPUs)
-      ctx.fillStyle = this.color;
-      ctx.globalAlpha = Math.max(0, this.life);
-      ctx.fillRect(this.x - this.size, this.y - this.size, this.size * 2, this.size * 2);
-    } else {
-      // Standard glowing glow circles path
-      ctx.save();
-      ctx.globalAlpha = Math.max(0, this.life);
-      ctx.fillStyle = this.color;
-      if (settings && settings.shadows) {
-        ctx.shadowBlur = settings.shadowBlur || 10;
-        ctx.shadowColor = this.color;
-      }
-      ctx.beginPath();
-      ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
-    }
+    ctx.save();
+    ctx.globalAlpha = Math.max(0, this.life);
+    ctx.fillStyle = this.color;
+    ctx.shadowBlur = 10;
+    ctx.shadowColor = this.color;
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
   }
 }
 

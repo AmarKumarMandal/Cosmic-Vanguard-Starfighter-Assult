@@ -61,28 +61,22 @@ const drawSingleThruster = (ctx, width, height, color) => {
   const flameWidth = width * 0.25; // Slightly narrower fitting
 
   const colors = getFlameColors(color);
-  const settings = typeof window !== 'undefined' ? window.__spaceWarQualitySettings : null;
 
   // Outer Glow
   ctx.beginPath();
   ctx.moveTo(-flameWidth/2, startY);
   ctx.quadraticCurveTo(0, startY + flameLength * 1.1, flameWidth/2, startY);
   ctx.fillStyle = colors.outer;
-  if (settings && settings.shadows) {
-    ctx.shadowBlur = settings.shadowBlur || 20;
-    ctx.shadowColor = colors.shadow;
-  }
+  ctx.shadowBlur = 20;
+  ctx.shadowColor = colors.shadow;
   ctx.fill();
 
-  // On low quality (no shadows), skip intermediate inner flame to save fill-rate/draw calls
-  if (!settings || settings.shadows || settings.exhaustDetail > 0.5) {
-    // Inner Flame
-    ctx.beginPath();
-    ctx.moveTo(-flameWidth/3, startY);
-    ctx.quadraticCurveTo(0, startY + flameLength * 0.7, flameWidth/3, startY);
-    ctx.fillStyle = colors.inner;
-    ctx.fill();
-  }
+  // Inner Flame
+  ctx.beginPath();
+  ctx.moveTo(-flameWidth/3, startY);
+  ctx.quadraticCurveTo(0, startY + flameLength * 0.7, flameWidth/3, startY);
+  ctx.fillStyle = colors.inner;
+  ctx.fill();
 
   // Core
   ctx.beginPath();
