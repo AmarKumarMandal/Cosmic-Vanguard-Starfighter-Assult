@@ -883,8 +883,6 @@ body, html {
 }
 
 .level-node-wrapper.locked .level-node {
-  background: radial-gradient(circle at 30% 30%, #4b5563, #1f2937 80%);
-  box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
   cursor: not-allowed;
 }
 

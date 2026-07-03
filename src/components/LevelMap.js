@@ -169,18 +169,25 @@ export default function LevelMap({ highScore, onSelect, onBack }) {
               >
                 <div 
                   className="level-node"
-                  style={isUnlocked ? {
+                  style={{
                     background: node.background,
-                    boxShadow: isCompleted 
-                      ? `0 0 25px ${node.color}, inset 0 0 10px rgba(255,255,255,0.5)` 
-                      : (node.isSun ? `0 0 35px #ff5500, 0 0 70px rgba(255,100,0,0.5), inset 0 0 10px rgba(255,255,255,0.5)` : `inset 0 0 10px rgba(255,255,255,0.5)`)
-                  } : {}}
+                    boxShadow: isUnlocked 
+                      ? (isCompleted 
+                          ? `0 0 25px ${node.color}, inset 0 0 10px rgba(255,255,255,0.5)` 
+                          : (node.isSun ? `0 0 35px #ff5500, 0 0 70px rgba(255,100,0,0.5), inset 0 0 10px rgba(255,255,255,0.5)` : `inset 0 0 10px rgba(255,255,255,0.5)`)
+                        )
+                      : `inset 0 0 10px rgba(0,0,0,0.8)`,
+                    filter: isUnlocked ? 'none' : 'grayscale(60%) brightness(0.4)'
+                  }}
                 >
                   {!isUnlocked && <span className="node-lock">🔒</span>}
                   
                   {/* Saturn/Uranus Rings */}
-                  {isUnlocked && node.hasRings && (
-                    <div style={node.ringStyle}></div>
+                  {node.hasRings && (
+                    <div style={{
+                      ...node.ringStyle,
+                      opacity: isUnlocked ? 1.0 : 0.4
+                    }}></div>
                   )}
                 </div>
                 {isUnlocked && <div className="node-ring"></div>}
