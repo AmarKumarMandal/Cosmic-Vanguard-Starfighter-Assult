@@ -7,7 +7,7 @@ const PATH_NODES = [
     y: 30, 
     planetName: "Mercury", 
     color: '#768a96',
-    background: 'radial-gradient(circle at 35% 35%, #b5c7d3 0%, #768a96 50%, #3a4b54 95%)',
+    background: 'radial-gradient(circle at 30% 30%, rgba(255,255,255,0.2) 0%, rgba(0,0,0,0.85) 90%), radial-gradient(circle at 65% 35%, #50616b 14%, transparent 16%), radial-gradient(circle at 35% 65%, #50616b 10%, transparent 12%), radial-gradient(circle at 60% 70%, #50616b 8%, transparent 10%), #768a96',
     sizeScale: 0.65 
   },
   { 
@@ -137,7 +137,7 @@ export default function LevelMap({ highScore, onSelect, onBack }) {
             {PATH_NODES.map((node, i) => {
               if (i === PATH_NODES.length - 1) return null;
               const nextNode = PATH_NODES[i + 1];
-              const isUnlocked = true; // Line is unlocked if we've beaten the origin node
+              const isUnlocked = nextNode.id <= maxUnlocked; // Line is unlocked if target node is unlocked
               return (
                 <line
                   key={`path-${node.id}`}
@@ -163,7 +163,7 @@ export default function LevelMap({ highScore, onSelect, onBack }) {
                 style={{ 
                   left: `${node.x}%`, 
                   top: `${node.y}%`,
-                  '--node-scale': 1.45
+                  '--node-scale': 1.25
                 }}
                 onClick={() => isUnlocked && onSelect(node.id)}
               >
@@ -173,13 +173,12 @@ export default function LevelMap({ highScore, onSelect, onBack }) {
                     className="planet-sphere"
                     style={{
                       background: node.background,
-                      boxShadow: isUnlocked 
-                        ? (isCompleted 
-                            ? `0 0 25px ${node.color}, inset 0 0 10px rgba(255,255,255,0.5)` 
-                            : (node.isSun ? `0 0 35px #ff5500, 0 0 70px rgba(255,100,0,0.5), inset 0 0 10px rgba(255,255,255,0.5)` : `inset 0 0 10px rgba(255,255,255,0.5)`)
+                      boxShadow: isCompleted 
+                        ? `0 0 25px ${node.color}, inset 0 0 10px rgba(255,255,255,0.5)` 
+                        : (node.isSun 
+                            ? `0 0 35px #ff5500, 0 0 70px rgba(255,100,0,0.5), inset 0 0 10px rgba(255,255,255,0.5)` 
+                            : `inset 0 0 10px rgba(255,255,255,0.5)`
                           )
-                        : `inset 0 0 10px rgba(0,0,0,0.8)`,
-                      filter: isUnlocked ? 'none' : 'grayscale(70%) brightness(0.35)'
                     }}
                   />
 
@@ -187,9 +186,9 @@ export default function LevelMap({ highScore, onSelect, onBack }) {
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 120" className="node-lock-svg">
                       <defs>
                         <linearGradient id="barGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                          <stop offset="0%" stopColor="#38bdf8" />
-                          <stop offset="50%" stopColor="#0284c7" />
-                          <stop offset="100%" stopColor="#0369a1" />
+                          <stop offset="0%" stopColor="#00f0ff" />
+                          <stop offset="50%" stopColor="#00a8ff" />
+                          <stop offset="100%" stopColor="#0066ff" />
                         </linearGradient>
                       </defs>
                       <path 
@@ -216,7 +215,7 @@ export default function LevelMap({ highScore, onSelect, onBack }) {
                   {node.hasRings && (
                     <div style={{
                       ...node.ringStyle,
-                      opacity: isUnlocked ? 1.0 : 0.4
+                      opacity: 1.0
                     }}></div>
                   )}
                 </div>
