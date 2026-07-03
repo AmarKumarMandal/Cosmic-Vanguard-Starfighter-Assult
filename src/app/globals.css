@@ -905,9 +905,9 @@ body, html {
 }
 
 .node-lock-svg {
-  width: clamp(20px, 4.5vmin, 32px);
-  height: clamp(26px, 5.85vmin, 42px);
-  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.6));
+  width: clamp(22px, 4.8vmin, 34px);
+  height: clamp(26.4px, 5.76vmin, 40.8px);
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.5));
   z-index: 10;
 }
 

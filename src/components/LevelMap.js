@@ -181,67 +181,30 @@ export default function LevelMap({ highScore, onSelect, onBack }) {
                   }}
                 >
                   {!isUnlocked && (
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 130" className="node-lock-svg">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 120" className="node-lock-svg">
                       <defs>
-                        <linearGradient id="shackleGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                          <stop offset="0%" stopColor="#8a9597" />
-                          <stop offset="25%" stopColor="#cfd8dc" />
-                          <stop offset="50%" stopColor="#ffffff" />
-                          <stop offset="75%" stopColor="#b0bec5" />
-                          <stop offset="100%" stopColor="#78909c" />
+                        <linearGradient id="barGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                          <stop offset="0%" stopColor="#38bdf8" />
+                          <stop offset="50%" stopColor="#0284c7" />
+                          <stop offset="100%" stopColor="#0369a1" />
                         </linearGradient>
-                        <linearGradient id="bodyGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                          <stop offset="0%" stopColor="#ffeb3b" />
-                          <stop offset="30%" stopColor="#fdd835" />
-                          <stop offset="70%" stopColor="#f57f17" />
-                          <stop offset="100%" stopColor="#8d6e63" />
-                        </linearGradient>
-                        <linearGradient id="borderGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                          <stop offset="0%" stopColor="#afb42b" />
-                          <stop offset="100%" stopColor="#5d4037" />
-                        </linearGradient>
-                        <radialGradient id="recessGrad" cx="50%" cy="50%" r="50%">
-                          <stop offset="0%" stopColor="#ffe082" />
-                          <stop offset="100%" stopColor="#b7900b" />
-                        </radialGradient>
                       </defs>
                       <path 
-                        d="M 25 50 L 25 32 A 25 25 0 0 1 75 32 L 75 50" 
+                        d="M 28 50 L 28 32 A 22 22 0 0 1 72 32 L 72 50" 
                         fill="none" 
-                        stroke="url(#shackleGrad)" 
-                        strokeWidth="13" 
+                        stroke="#000000" 
+                        strokeWidth="11" 
                         strokeLinecap="round"
                       />
-                      <rect 
-                        x="10" 
-                        y="46" 
-                        width="80" 
-                        height="74" 
-                        rx="12" 
-                        ry="12" 
-                        fill="url(#bodyGrad)" 
-                        stroke="url(#borderGrad)" 
-                        strokeWidth="4" 
-                      />
+                      <rect x="12" y="48" width="76" height="20" rx="7" ry="7" fill="url(#barGrad)" />
+                      <rect x="12" y="72" width="76" height="20" rx="7" ry="7" fill="url(#barGrad)" />
+                      <rect x="12" y="96" width="76" height="20" rx="7" ry="7" fill="url(#barGrad)" />
                       <path 
-                        d="M 12 56 C 25 50, 75 50, 88 56" 
-                        fill="none" 
+                        d="M 50 66 A 9 9 0 0 0 43.5 81 C 43.5 83, 46 84, 46 92 L 54 92 C 54 84, 56.5 83, 56.5 81 A 9 9 0 0 0 50 66 Z" 
+                        fill="#000000" 
                         stroke="#ffffff" 
                         strokeWidth="3.5" 
-                        opacity="0.6" 
-                        strokeLinecap="round"
-                      />
-                      <circle 
-                        cx="50" 
-                        cy="83" 
-                        r="17" 
-                        fill="url(#recessGrad)" 
-                        stroke="#8d6e63" 
-                        strokeWidth="2.5" 
-                      />
-                      <path 
-                        d="M 50 73 A 6.5 6.5 0 0 0 45 81.5 C 45 83.5, 47 84.5, 47 90.5 A 3 3 0 0 0 53 90.5 C 53 84.5, 55 83.5, 55 81.5 A 6.5 6.5 0 0 0 50 73 Z" 
-                        fill="#1a1a1a" 
+                        strokeLinejoin="miter"
                       />
                     </svg>
                   )}
