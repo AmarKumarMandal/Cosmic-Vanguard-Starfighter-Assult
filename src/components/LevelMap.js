@@ -111,7 +111,7 @@ const PATH_NODES = [
     id: 10, 
     x: 90, 
     y: 15, 
-    planetName: "The Sun", 
+    planetName: "Orion", 
     color: '#ff8008',
     background: 'radial-gradient(circle at 35% 35%, #fffb8f 0%, #ff8008 45%, #d11919 80%, #630505 100%)',
     sizeScale: 1.55,
@@ -174,10 +174,10 @@ export default function LevelMap({ highScore, onSelect, onBack }) {
                     style={{
                       background: node.background,
                       boxShadow: isCompleted 
-                        ? `0 0 25px ${node.color}, inset 0 0 10px rgba(255,255,255,0.5)` 
+                        ? `0 0 25px ${node.color}, inset 0 0 12px rgba(255,255,255,0.6)` 
                         : (node.isSun 
-                            ? `0 0 35px #ff5500, 0 0 70px rgba(255,100,0,0.5), inset 0 0 10px rgba(255,255,255,0.5)` 
-                            : `inset 0 0 10px rgba(255,255,255,0.5)`
+                            ? `0 0 35px #ff5500, 0 0 70px rgba(255,100,0,0.5), inset 0 0 12px rgba(255,255,255,0.6)` 
+                            : `0 0 15px ${node.color}aa, inset 0 0 12px rgba(255,255,255,0.5)`
                           )
                     }}
                   />

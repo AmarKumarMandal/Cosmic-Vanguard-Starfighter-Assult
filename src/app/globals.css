@@ -882,6 +882,8 @@ body, html {
   position: relative;
   z-index: 3;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1.5px solid rgba(255, 255, 255, 0.4);
+  box-sizing: border-box;
 }
 
 .planet-sphere {
