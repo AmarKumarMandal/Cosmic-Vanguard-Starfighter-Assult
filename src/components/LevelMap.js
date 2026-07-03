@@ -167,19 +167,22 @@ export default function LevelMap({ highScore, onSelect, onBack }) {
                 }}
                 onClick={() => isUnlocked && onSelect(node.id)}
               >
-                <div 
-                  className="level-node"
-                  style={{
-                    background: node.background,
-                    boxShadow: isUnlocked 
-                      ? (isCompleted 
-                          ? `0 0 25px ${node.color}, inset 0 0 10px rgba(255,255,255,0.5)` 
-                          : (node.isSun ? `0 0 35px #ff5500, 0 0 70px rgba(255,100,0,0.5), inset 0 0 10px rgba(255,255,255,0.5)` : `inset 0 0 10px rgba(255,255,255,0.5)`)
-                        )
-                      : `inset 0 0 10px rgba(0,0,0,0.8)`,
-                    filter: isUnlocked ? 'none' : 'grayscale(60%) brightness(0.4)'
-                  }}
-                >
+                <div className="level-node">
+                  {/* Planet Sphere containing the background texture, shadowed/filtered when locked */}
+                  <div 
+                    className="planet-sphere"
+                    style={{
+                      background: node.background,
+                      boxShadow: isUnlocked 
+                        ? (isCompleted 
+                            ? `0 0 25px ${node.color}, inset 0 0 10px rgba(255,255,255,0.5)` 
+                            : (node.isSun ? `0 0 35px #ff5500, 0 0 70px rgba(255,100,0,0.5), inset 0 0 10px rgba(255,255,255,0.5)` : `inset 0 0 10px rgba(255,255,255,0.5)`)
+                          )
+                        : `inset 0 0 10px rgba(0,0,0,0.8)`,
+                      filter: isUnlocked ? 'none' : 'grayscale(70%) brightness(0.35)'
+                    }}
+                  />
+
                   {!isUnlocked && (
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 120" className="node-lock-svg">
                       <defs>
