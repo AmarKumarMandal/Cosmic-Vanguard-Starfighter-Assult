@@ -912,28 +912,74 @@ export class Game {
   }
 
   updateAbility(dt) {
-    if (this.abilityCooldown > 0) {
+    // Only countdown cooldown if the ability is NOT active
+    if (this.abilityCooldown > 0 && !this.abilityActive) {
       this.abilityCooldown = Math.max(0, this.abilityCooldown - dt);
-      const cdLeft = document.getElementById('ability-cooldown-left');
-      const cdRight = document.getElementById('ability-cooldown-right');
-      const text = this.abilityCooldown > 0 ? Math.ceil(this.abilityCooldown) : '';
-      if (cdLeft) cdLeft.textContent = text;
-      if (cdRight) cdRight.textContent = text;
+    }
+
+    if (this.abilityActive) {
+      this.abilityActiveTimer = Math.max(0, this.abilityActiveTimer - dt);
+      
+      // End active phase if timer runs out (for non-projectile/event abilities)
+      if (this.abilityActiveTimer <= 0 && this.abilityType !== 'gravity-singularity' && this.abilityType !== 'solar-flare' && this.abilityType !== 'cryo-shockwave') {
+        this.abilityActive = false;
+        this.abilityCooldown = this.abilityMaxCooldown;
+        if (this.abilityType === 'phase-shift') {
+          this.player.isInvulnerable = false;
+        }
+      }
+    }
+
+    // Update the UI overlays
+    const cdLeft = document.getElementById('ability-cooldown-left');
+    const cdRight = document.getElementById('ability-cooldown-right');
+    
+    let uiText = '';
+    let isCooldown = false;
+    let isActive = false;
+    
+    if (this.abilityActive) {
+      isActive = true;
+      uiText = Math.ceil(this.abilityActiveTimer) + 's';
+    } else if (this.abilityCooldown > 0) {
+      isCooldown = true;
+      uiText = Math.ceil(this.abilityCooldown);
+    }
+    
+    if (cdLeft) {
+      cdLeft.textContent = uiText;
+      if (isActive) {
+        cdLeft.style.display = 'flex';
+        cdLeft.style.color = '#00ff88';
+        cdLeft.style.textShadow = '0 0 8px #00ff88';
+        cdLeft.style.background = 'rgba(0, 255, 136, 0.15)';
+      } else if (isCooldown) {
+        cdLeft.style.display = 'flex';
+        cdLeft.style.color = '#ff3366';
+        cdLeft.style.textShadow = '0 0 8px #ff0055, 0 0 2px #000';
+        cdLeft.style.background = 'rgba(0, 0, 0, 0.7)';
+      } else {
+        cdLeft.style.display = 'none';
+      }
+    }
+    if (cdRight) {
+      cdRight.textContent = uiText;
+      if (isActive) {
+        cdRight.style.display = 'flex';
+        cdRight.style.color = '#00ff88';
+        cdRight.style.textShadow = '0 0 8px #00ff88';
+        cdRight.style.background = 'rgba(0, 255, 136, 0.15)';
+      } else if (isCooldown) {
+        cdRight.style.display = 'flex';
+        cdRight.style.color = '#ff3366';
+        cdRight.style.textShadow = '0 0 8px #ff0055, 0 0 2px #000';
+        cdRight.style.background = 'rgba(0, 0, 0, 0.7)';
+      } else {
+        cdRight.style.display = 'none';
+      }
     }
 
     if (!this.abilityActive) return;
-
-    this.abilityActiveTimer = Math.max(0, this.abilityActiveTimer - dt);
-    
-    // Custom check for instant/special abilities to end active phase
-    if (this.abilityActiveTimer <= 0 && this.abilityType !== 'gravity-singularity' && this.abilityType !== 'solar-flare' && this.abilityType !== 'cryo-shockwave') {
-      this.abilityActive = false;
-      this.abilityCooldown = this.abilityMaxCooldown;
-      if (this.abilityType === 'phase-shift') {
-        this.player.isInvulnerable = false;
-      }
-      return;
-    }
 
     const time = performance.now();
 
