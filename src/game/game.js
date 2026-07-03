@@ -1433,23 +1433,53 @@ export class Game {
           const bAngle = angle + (i * Math.PI * 2 / bladesCount);
           const bX = this.player.x + Math.cos(bAngle) * radius;
           const bY = this.player.y + Math.sin(bAngle) * radius;
-          ctx.fillStyle = this.abilityColor;
-          ctx.shadowBlur = 15;
-          ctx.shadowColor = this.abilityColor;
+          
           ctx.save();
           ctx.translate(bX, bY);
           ctx.rotate(bAngle + Math.PI/2);
+          
+          // Draw outer glowing aura (gold blur)
+          ctx.shadowBlur = 20;
+          ctx.shadowColor = '#ffd700';
+          
+          // Create the polished metallic gold gradient
+          const grad = ctx.createLinearGradient(-3, 0, 12, 0);
+          grad.addColorStop(0, '#b8860b'); // Dark gold shadow
+          grad.addColorStop(0.25, '#ffd700'); // Gold
+          grad.addColorStop(0.5, '#fffcd1'); // Polished bright highlight
+          grad.addColorStop(0.7, '#ffa500'); // Orange-gold
+          grad.addColorStop(1, '#9b7500'); // Blade edge
+          ctx.fillStyle = grad;
+          
+          // Draw the curved saber blade path
           ctx.beginPath();
-          ctx.moveTo(0, -10);
-          ctx.lineTo(4, 3);
-          ctx.lineTo(0, 0);
-          ctx.lineTo(-4, 3);
+          // Tang base
+          ctx.moveTo(-2, 14);
+          ctx.lineTo(2, 13);
+          ctx.lineTo(1.5, 4);
+          // Blade shoulder base right
+          ctx.lineTo(3.5, 3.5);
+          // Curved cutting edge facing right
+          ctx.quadraticCurveTo(9, -7, 13, -25);
+          // Tip
+          ctx.lineTo(12, -26);
+          // Curved spine (back of the blade) facing left
+          ctx.quadraticCurveTo(5, -8, -2, 3.5);
+          ctx.lineTo(-2, 14);
           ctx.closePath();
           ctx.fill();
-          ctx.fillStyle = '#ffffff';
+          
+          // Draw a crisp gold outline to make the blade shape pop even more
+          ctx.strokeStyle = '#fff275';
+          ctx.lineWidth = 0.75;
+          ctx.stroke();
+          
+          // Draw the mounting hole in the tang
+          ctx.fillStyle = '#050508'; // matching the space background
           ctx.beginPath();
-          ctx.arc(0, -3, 1.5, 0, Math.PI * 2);
+          ctx.arc(0, 9, 1.2, 0, Math.PI * 2);
           ctx.fill();
+          
           ctx.restore();
         }
         ctx.restore();
