@@ -25,17 +25,63 @@ const abilityConfig = {
 export default function GameCanvas() {
   const canvasRef = useRef(null);
   const [gameState, setGameState] = useState('menu'); // 'menu', 'playing', 'gameover', 'paused'
-  const [currentLevel, setCurrentLevel] = useState(1);
-  const [highScore, setHighScore] = useState(0);
+  const [currentLevel, setCurrentLevel] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const savedLevel = localStorage.getItem('spaceWarCurrentLevel');
+      if (savedLevel) return parseInt(savedLevel, 10);
+    }
+    return 1;
+  });
+  const [highScore, setHighScore] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const savedScore = localStorage.getItem('spaceWarHighScore');
+      if (savedScore) return parseInt(savedScore, 10);
+    }
+    return 0;
+  });
   const [finalWave, setFinalWave] = useState(1);
-  const [hasSaveData, setHasSaveData] = useState(false);
+  const [hasSaveData, setHasSaveData] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const savedGame = localStorage.getItem('spaceWarSaveData');
+      if (savedGame) {
+        try {
+          const parsed = JSON.parse(savedGame);
+          if (parsed && parsed.status === 'ACTIVE') return true;
+        } catch (e) {
+          console.error('Error parsing save data:', e);
+        }
+      }
+    }
+    return false;
+  });
   const [hasActiveGame, setHasActiveGame] = useState(false);
   
-  const [globalMoney, setGlobalMoney] = useState(0);
-  const [unlockedShips, setUnlockedShips] = useState(['starter']);
-  const [activeShipId, setActiveShipId] = useState('starter');
+  const [globalMoney, setGlobalMoney] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const savedBank = localStorage.getItem('spaceWarBank');
+      if (savedBank !== null) {
+        const parsed = parseInt(savedBank);
+        if (!isNaN(parsed)) return parsed;
+      }
+    }
+    return 0;
+  });
+  const [unlockedShips, setUnlockedShips] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const savedUnlocked = localStorage.getItem('spaceWarUnlocked');
+      if (savedUnlocked) return JSON.parse(savedUnlocked);
+    }
+    return ['a1-cyan']; // starter ship ID
+  });
+  const [activeShipId, setActiveShipId] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const savedActiveShip = localStorage.getItem('spaceWarActiveShip');
+      if (savedActiveShip) return savedActiveShip;
+    }
+    return 'a1-cyan'; // starter ship ID
+  });
   const [isMounted, setIsMounted] = useState(false);
-  const [bankLoaded, setBankLoaded] = useState(false);
+  const [bankLoaded, setBankLoaded] = useState(true);
   const [showLevelSelect, setShowLevelSelect] = useState(false);
   const [startingWave, setStartingWave] = useState(1);
   const [menuSelectedIndex, setMenuSelectedIndex] = useState(0);
@@ -121,30 +167,6 @@ export default function GameCanvas() {
 
   useEffect(() => {
     setIsMounted(true);
-    const savedScore = localStorage.getItem('spaceWarHighScore');
-    if (savedScore) setHighScore(parseInt(savedScore));
-    
-    checkSaveData();
-
-    const savedBank = localStorage.getItem('spaceWarBank');
-    if (savedBank !== null) {
-      const parsed = parseInt(savedBank);
-      if (!isNaN(parsed)) {
-        setGlobalMoney(parsed);
-        console.log(`[LOAD] Bank initialized from disk: ${parsed}`);
-      }
-    }
-
-    const savedUnlocked = localStorage.getItem('spaceWarUnlocked');
-    if (savedUnlocked) setUnlockedShips(JSON.parse(savedUnlocked));
-
-    const savedActiveShip = localStorage.getItem('spaceWarActiveShip');
-    if (savedActiveShip) setActiveShipId(savedActiveShip);
-    
-    const savedLevel = localStorage.getItem('spaceWarCurrentLevel');
-    if (savedLevel) setCurrentLevel(parseInt(savedLevel, 10));
-
-    setBankLoaded(true);
   }, []);
 
   // Disable Tab-based navigation entirely to prioritize Arrow keys only

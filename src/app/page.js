@@ -1,4 +1,6 @@
-import GameCanvas from '@/components/GameCanvas';
+import dynamic from 'next/dynamic';
+
+const GameCanvas = dynamic(() => import('@/components/GameCanvas'), { ssr: false });
 
 export const metadata = {
   title: 'Space War',
