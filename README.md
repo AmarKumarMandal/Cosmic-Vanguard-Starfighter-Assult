@@ -1,6 +1,6 @@
-# 🚀 Cosmic Vanguard Starfighter Assult
+# 🚀 Cosmic Vanguard Starfighter Assault
 
-Welcome to **Space War**, an action-packed 2D top-down space arcade shooter built with **Next.js**, **React**, and **HTML5 Canvas**. Pilot advanced starfighters, purchase upgrades in the Hangar, and battle challenging alien forces!
+Welcome to **Cosmic Vanguard Starfighter Assault**, an action-packed 2D top-down space arcade shooter built with **Next.js**, **React**, and **HTML5 Canvas**. Pilot advanced starfighters, purchase upgrades in the Hangar, and battle challenging alien forces!
 
 ---
 
@@ -69,8 +69,8 @@ Make sure you have [Node.js](https://nodejs.org/) installed.
 ### Installation
 Clone the repository and install the dependencies:
 ```bash
-git clone https://github.com/AmarKumarMandal/Space-War-Game.git
-cd Space-War-Game
+git clone https://github.com/AmarKumarMandal/Cosmic-Vanguard-Starfighter-Assault.git
+cd Cosmic-Vanguard-Starfighter-Assault
 npm install
 ```
 
@@ -79,7 +79,7 @@ Start the local Next.js development server:
 ```bash
 npm run dev
 ```
-Open [http://localhost:3000](http://localhost:3000) in your web browser to play the game!
+Open [http://localhost:3001](http://localhost:3001) in your web browser to play the game!
 
 ### Building for Production
 Build the production bundle and start the production server:

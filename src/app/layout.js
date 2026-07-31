@@ -4,7 +4,7 @@ import "./globals.css";
 const outfit = Outfit({ subsets: ["latin"] });
 
 export const metadata = {
-  title: "Space War Nexus",
+  title: "Cosmic Vanguard Starfighter Assault",
   description: "A premium Next.js 2D Arcade Space Shooter using HTML5 Canvas",
 };
 
