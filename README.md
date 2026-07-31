@@ -1,4 +1,4 @@
-# 🚀 Space War Game
+# 🚀 Cosmic Vanguard Starfighter Assult
 
 Welcome to **Space War**, an action-packed 2D top-down space arcade shooter built with **Next.js**, **React**, and **HTML5 Canvas**. Pilot advanced starfighters, purchase upgrades in the Hangar, and battle challenging alien forces!
 
