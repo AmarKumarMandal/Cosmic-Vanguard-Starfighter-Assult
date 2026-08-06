@@ -103,18 +103,28 @@ export default function GameCanvas() {
   const activeKeysRef = useRef({});
 
   const handleControlStart = (e, key) => {
-    e.preventDefault();
+    if (e && e.preventDefault) e.preventDefault();
     if (!activeKeysRef.current[key]) {
       activeKeysRef.current[key] = true;
-      window.dispatchEvent(new KeyboardEvent('keydown', { key }));
+      if (gameRef.current && gameRef.current.input) {
+        gameRef.current.input.keys[key] = true;
+        gameRef.current.input.keys[key.toLowerCase()] = true;
+        gameRef.current.input.keys[key.toUpperCase()] = true;
+      }
+      window.dispatchEvent(new KeyboardEvent('keydown', { key, code: key, bubbles: true }));
     }
   };
 
   const handleControlEnd = (e, key) => {
-    e.preventDefault();
+    if (e && e.preventDefault) e.preventDefault();
     if (activeKeysRef.current[key]) {
       activeKeysRef.current[key] = false;
-      window.dispatchEvent(new KeyboardEvent('keyup', { key }));
+      if (gameRef.current && gameRef.current.input) {
+        gameRef.current.input.keys[key] = false;
+        gameRef.current.input.keys[key.toLowerCase()] = false;
+        gameRef.current.input.keys[key.toUpperCase()] = false;
+      }
+      window.dispatchEvent(new KeyboardEvent('keyup', { key, code: key, bubbles: true }));
     }
   };
 
@@ -288,13 +298,53 @@ export default function GameCanvas() {
     };
   }, []);
 
+  // Direct keyboard event bridge during active gameplay
   useEffect(() => {
-    if (gameState === 'playing' && gameRef.current) {
-      setTimeout(() => gameRef.current.updateHUD(), 0);
-    }
+    if (gameState !== 'playing') return;
+
+    const handleGameplayKeyDown = (e) => {
+      if (gameRef.current && gameRef.current.input && gameRef.current.input.keys) {
+        const key = e.key;
+        const code = e.code;
+        if (key) {
+          gameRef.current.input.keys[key] = true;
+          gameRef.current.input.keys[key.toLowerCase()] = true;
+          gameRef.current.input.keys[key.toUpperCase()] = true;
+        }
+        if (code) {
+          gameRef.current.input.keys[code] = true;
+        }
+      }
+    };
+
+    const handleGameplayKeyUp = (e) => {
+      if (gameRef.current && gameRef.current.input && gameRef.current.input.keys) {
+        const key = e.key;
+        const code = e.code;
+        if (key) {
+          gameRef.current.input.keys[key] = false;
+          gameRef.current.input.keys[key.toLowerCase()] = false;
+          gameRef.current.input.keys[key.toUpperCase()] = false;
+        }
+        if (code) {
+          gameRef.current.input.keys[code] = false;
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleGameplayKeyDown, { capture: true });
+    window.addEventListener('keyup', handleGameplayKeyUp, { capture: true });
+
+    return () => {
+      window.removeEventListener('keydown', handleGameplayKeyDown, { capture: true });
+      window.removeEventListener('keyup', handleGameplayKeyUp, { capture: true });
+    };
   }, [gameState]);
 
   const lockLandscape = () => {
+    if (typeof document !== 'undefined' && document.activeElement && document.activeElement.blur) {
+      document.activeElement.blur();
+    }
     const isTouchDevice = typeof window !== 'undefined' && 
       (window.matchMedia('(pointer: coarse)').matches || 'ontouchstart' in window);
 
@@ -319,6 +369,9 @@ export default function GameCanvas() {
 
   const startGame = (level = currentLevel) => {
     lockLandscape();
+    if (typeof document !== 'undefined' && document.activeElement && document.activeElement.blur) {
+      document.activeElement.blur();
+    }
     // Do not call bankSessionMoney() here to prevent banking abandoned runs
     markSaveAsResolved(); // Invalidate any previous active save when starting a new run
     setGameState('playing');
@@ -330,6 +383,9 @@ export default function GameCanvas() {
 
   const continueGame = () => {
     lockLandscape();
+    if (typeof document !== 'undefined' && document.activeElement && document.activeElement.blur) {
+      document.activeElement.blur();
+    }
     setGameState('playing');
     if (gameRef.current) gameRef.current.resume();
   };
@@ -341,6 +397,9 @@ export default function GameCanvas() {
         const parsed = JSON.parse(data);
         if (parsed && parsed.status === 'ACTIVE') {
           lockLandscape();
+          if (typeof document !== 'undefined' && document.activeElement && document.activeElement.blur) {
+            document.activeElement.blur();
+          }
           gameRef.current.startFromLoad(data);
           setGameState('playing');
           if (parsed.level) {
@@ -415,48 +474,23 @@ export default function GameCanvas() {
     ];
   }, [continueGame, saveGame, loadGame, hasSaveData, quitGameFromPause]);
 
-  // Reset menu index when screen/mode changes
+  const menuSelectedIndexRef = useRef(menuSelectedIndex);
   useEffect(() => {
-    setMenuSelectedIndex(0);
-  }, [gameState, showLevelSelect, showControls]);
+    menuSelectedIndexRef.current = menuSelectedIndex;
+  }, [menuSelectedIndex]);
 
-  // Keyboard navigation listener (Up/Down, Enter)
+  // Master capture listener for interface & gameplay keyboard shortcuts
   useEffect(() => {
-    const isMenu = gameState === 'menu' && !showLevelSelect && !showControls;
-    const isPaused = gameState === 'paused';
-    if (!isMenu && !isPaused) return;
+    const handleMasterKeyDown = (e) => {
+      const key = e.key;
+      const code = e.code || '';
+      const lowerKey = key ? key.toLowerCase() : '';
+      const isSpace = lowerKey === ' ' || lowerKey === 'spacebar' || code === 'Space';
+      const isEnter = lowerKey === 'enter' || code === 'Enter' || code === 'NumpadEnter';
+      const isBack = lowerKey === 'escape' || lowerKey === 'backspace' || code === 'Escape' || code === 'Backspace';
 
-    const options = isMenu ? getMenuOptions() : getPauseOptions();
-
-    const handleKeyDown = (e) => {
-      if (e.key === 'ArrowUp' || e.key === 'Up') {
-        e.preventDefault();
-        setMenuSelectedIndex((prev) => (prev - 1 + options.length) % options.length);
-      } else if (e.key === 'ArrowDown' || e.key === 'Down') {
-        e.preventDefault();
-        setMenuSelectedIndex((prev) => (prev + 1) % options.length);
-      } else if (e.key === 'Enter') {
-        e.preventDefault();
-        const selectedOption = options[menuSelectedIndex];
-        if (selectedOption && !selectedOption.disabled) {
-          selectedOption.action();
-        }
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [gameState, showLevelSelect, showControls, menuSelectedIndex, getMenuOptions, getPauseOptions]);
-
-  // Global actions shortcuts (M, Escape, Backspace, +/-, etc.)
-  useEffect(() => {
-    const handleGlobalKeyDown = (e) => {
-      const key = e.key.toLowerCase();
-
-      // M key: Mute/Unmute
-      if (key === 'm') {
+      // --- A. MUTE / UNMUTE SOUNDTRACK (M Key) ---
+      if (lowerKey === 'm' || code === 'KeyM') {
         e.preventDefault();
         if (soundManagerInstance) {
           soundManagerInstance.toggleMute();
@@ -464,62 +498,93 @@ export default function GameCanvas() {
         return;
       }
 
-      // + or = key: Volume Up
-      if (key === '+' || key === '=') {
+      // --- B. VOLUME ADJUSTMENT (+ / - Keys) ---
+      if (key === '+' || key === '=' || code === 'Equal' || code === 'NumpadAdd') {
         e.preventDefault();
         if (soundManagerInstance) {
-          const currentVol = soundManagerInstance.volume;
-          const newVol = Math.min(1.0, currentVol + 0.1);
-          soundManagerInstance.setVolume(newVol);
+          soundManagerInstance.setVolume(Math.min(1.0, soundManagerInstance.volume + 0.1));
+        }
+        return;
+      }
+      if (key === '-' || key === '_' || code === 'Minus' || code === 'NumpadSubtract') {
+        e.preventDefault();
+        if (soundManagerInstance) {
+          soundManagerInstance.setVolume(Math.max(0.0, soundManagerInstance.volume - 0.1));
         }
         return;
       }
 
-      // - key: Volume Down
-      if (key === '-') {
-        e.preventDefault();
-        if (soundManagerInstance) {
-          const currentVol = soundManagerInstance.volume;
-          const newVol = Math.max(0.0, currentVol - 0.1);
-          soundManagerInstance.setVolume(newVol);
-        }
-        return;
-      }
-
-      // Enter key: Close controls if open
-      if (e.key === 'Enter' && showControls) {
-        e.preventDefault();
-        setShowControls(false);
-        return;
-      }
-
-      // Backspace or Escape: Back
-      if (e.key === 'Backspace' || e.key === 'Escape') {
-        e.preventDefault();
-        if (showControls) {
+      // --- C. CONTROLS MODAL OVERLAY (Close on Escape, Enter, Space, Backspace) ---
+      if (showControls) {
+        if (isBack || isEnter || isSpace) {
+          e.preventDefault();
           setShowControls(false);
           return;
         }
+      }
+
+      // --- D. ACTIVE GAMEPLAY SHORTCUTS (Ability & Pause) ---
+      if (gameState === 'playing') {
+        if (isBack) {
+          e.preventDefault();
+          if (gameRef.current) gameRef.current.pause();
+          setGameState('paused');
+          return;
+        }
+        if (isSpace || lowerKey === 'shift' || lowerKey === 'f' || lowerKey === 'e' || code.startsWith('Shift') || code === 'KeyF' || code === 'KeyE') {
+          e.preventDefault();
+          if (gameRef.current) gameRef.current.activateAbility();
+          return;
+        }
+        return;
+      }
+
+      // --- E. BACKSPACE / ESCAPE (Navigation Back / Resume) ---
+      if (isBack) {
+        e.preventDefault();
         if (gameState === 'hangar') {
           setGameState('menu');
         } else if (gameState === 'menu' && showLevelSelect) {
           setShowLevelSelect(false);
-        } else if (gameState === 'playing') {
-          window.dispatchEvent(new CustomEvent('toggle-pause'));
         } else if (gameState === 'paused') {
-          continueGame();
+          if (gameRef.current) gameRef.current.resume();
+          setGameState('playing');
         } else if (gameState === 'gameover' || gameState === 'levelcomplete') {
-          quitGameFromGameOver();
+          setGameState('menu');
         }
         return;
       }
+
+      // --- F. MENU & PAUSE NAVIGATION (W/S, Up/Down, Enter, Space) ---
+      const isMenu = gameState === 'menu' && !showLevelSelect && !showControls;
+      const isPaused = gameState === 'paused';
+
+      if (isMenu || isPaused) {
+        const options = isMenu ? getMenuOptions() : getPauseOptions();
+        if (!options || options.length === 0) return;
+
+        if (key === 'ArrowUp' || key === 'Up' || lowerKey === 'w' || code === 'KeyW' || code === 'ArrowUp') {
+          e.preventDefault();
+          setMenuSelectedIndex((prev) => (prev - 1 + options.length) % options.length);
+        } else if (key === 'ArrowDown' || key === 'Down' || lowerKey === 's' || code === 'KeyS' || code === 'ArrowDown') {
+          e.preventDefault();
+          setMenuSelectedIndex((prev) => (prev + 1) % options.length);
+        } else if (isEnter || isSpace) {
+          e.preventDefault();
+          const currIndex = menuSelectedIndexRef.current;
+          const selectedOption = options[currIndex];
+          if (selectedOption && !selectedOption.disabled) {
+            selectedOption.action();
+          }
+        }
+      }
     };
 
-    window.addEventListener('keydown', handleGlobalKeyDown);
+    window.addEventListener('keydown', handleMasterKeyDown, { capture: true });
     return () => {
-      window.removeEventListener('keydown', handleGlobalKeyDown);
+      window.removeEventListener('keydown', handleMasterKeyDown, { capture: true });
     };
-  }, [gameState, showLevelSelect, showControls, continueGame, quitGameFromGameOver]);
+  }, [gameState, showLevelSelect, showControls, getMenuOptions, getPauseOptions]);
 
   // Swipe touch gestures navigation
   useEffect(() => {

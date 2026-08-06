@@ -37,34 +37,51 @@ export class Game {
 
     window.addEventListener('keydown', e => {
       const key = e.key;
-      const lowerKey = key.toLowerCase();
-      const upperKey = key.toUpperCase();
+      const code = e.code;
+      const lowerKey = key ? key.toLowerCase() : '';
+      const upperKey = key ? key.toUpperCase() : '';
       
-      if (lowerKey === 'escape' && !this.input.keys['Escape']) {
-        window.dispatchEvent(new CustomEvent('toggle-pause'));
+      if (this.isRunning && !this.isPaused) {
+        // Prevent browser page scrolling when using movement or action keys
+        if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' ', 'Spacebar'].includes(key) || ['KeyW', 'KeyA', 'KeyS', 'KeyD'].includes(code)) {
+          e.preventDefault();
+        }
       }
-      if ((lowerKey === ' ' || lowerKey === 'spacebar' || lowerKey === 'shift' || lowerKey === 'f' || lowerKey === 'e') && this.isRunning && !this.isPaused) {
-        // Prevent page scrolling on Spacebar
-        if (lowerKey === ' ') e.preventDefault();
+
+      if ((lowerKey === ' ' || lowerKey === 'spacebar' || lowerKey === 'shift' || lowerKey === 'f' || lowerKey === 'e' || code === 'Space' || code.startsWith('Shift') || code === 'KeyF' || code === 'KeyE') && this.isRunning && !this.isPaused) {
         this.activateAbility();
       }
       
-      this.input.keys[key] = true;
-      this.input.keys[lowerKey] = true;
-      this.input.keys[upperKey] = true;
+      if (key) {
+        this.input.keys[key] = true;
+        this.input.keys[lowerKey] = true;
+        this.input.keys[upperKey] = true;
+      }
+      if (code) {
+        this.input.keys[code] = true;
+      }
     });
+
     window.addEventListener('keyup', e => {
       const key = e.key;
-      const lowerKey = key.toLowerCase();
-      const upperKey = key.toUpperCase();
+      const code = e.code;
+      const lowerKey = key ? key.toLowerCase() : '';
+      const upperKey = key ? key.toUpperCase() : '';
       
-      this.input.keys[key] = false;
-      this.input.keys[lowerKey] = false;
-      this.input.keys[upperKey] = false;
+      if (key) {
+        this.input.keys[key] = false;
+        this.input.keys[lowerKey] = false;
+        this.input.keys[upperKey] = false;
+      }
+      if (code) {
+        this.input.keys[code] = false;
+      }
     });
 
     window.addEventListener('blur', () => {
-      this.input.keys = {};
+      if (this.input && this.input.keys) {
+        for (let k in this.input.keys) delete this.input.keys[k];
+      }
     });
 
     // Custom window listener for mobile buttons
@@ -74,48 +91,14 @@ export class Game {
       }
     });
 
-    const getTouchTarget = (e) => {
-      const touch = e.touches[0];
-      const rect = this.canvas.getBoundingClientRect();
-      const isPortrait = window.innerHeight > window.innerWidth;
-      
-      const clientX = touch.clientX - rect.left;
-      const clientY = touch.clientY - rect.top;
-
-      if (isPortrait) {
-        // Rotated 90deg clockwise mapping:
-        // localX = clientY
-        // localY = rect.width - clientX
-        const localX = clientY;
-        const localY = rect.width - clientX;
-        return {
-          x: (localX / rect.height) * 1600,
-          y: (localY / rect.width) * 900
-        };
-      } else {
-        return {
-          x: (clientX / rect.width) * 1600,
-          y: (clientY / rect.height) * 900
-        };
-      }
-    };
-
-    // Touch support mapping for mobile
-    this.canvas.addEventListener('touchstart', e => {
-      this.input.touchTarget = getTouchTarget(e);
-    });
-    this.canvas.addEventListener('touchmove', e => {
-      e.preventDefault();
-      this.input.touchTarget = getTouchTarget(e);
-    }, {passive: false});
-    window.addEventListener('touchend', e => {
-      this.input.touchTarget = null;
-    });
-
     this.reset();
   }
 
   reset(level = 1) {
+    if (this.input && this.input.keys) {
+      for (let k in this.input.keys) delete this.input.keys[k];
+    }
+    this.input.touchTarget = null;
     this.player = new Player(this.virtualCanvas, this.shipConfig);
     this.enemies = [];
     this.projectiles = [];

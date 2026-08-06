@@ -45,32 +45,26 @@ export class Player {
   }
 
   update(dt, input) {
-    // Input handling (Case-insensitive check for WASD and Arrow keys)
-    const left = input.keys['ArrowLeft'] || input.keys['arrowleft'] || input.keys['a'] || input.keys['A'];
-    const right = input.keys['ArrowRight'] || input.keys['arrowright'] || input.keys['d'] || input.keys['D'];
-    const up = input.keys['ArrowUp'] || input.keys['arrowup'] || input.keys['w'] || input.keys['W'];
-    const down = input.keys['ArrowDown'] || input.keys['arrowdown'] || input.keys['s'] || input.keys['S'];
+    if (!input || !input.keys) return;
 
-    if (left) this.vx = -this.speed;
-    else if (right) this.vx = this.speed;
+    // Input handling (WASD, Arrow keys, and KeyboardEvent.code)
+    const left = input.keys['ArrowLeft'] || input.keys['arrowleft'] || input.keys['a'] || input.keys['A'] || input.keys['KeyA'];
+    const right = input.keys['ArrowRight'] || input.keys['arrowright'] || input.keys['d'] || input.keys['D'] || input.keys['KeyD'];
+    const up = input.keys['ArrowUp'] || input.keys['arrowup'] || input.keys['w'] || input.keys['W'] || input.keys['KeyW'];
+    const down = input.keys['ArrowDown'] || input.keys['arrowdown'] || input.keys['s'] || input.keys['S'] || input.keys['KeyS'];
+
+    if (left && !right) this.vx = -this.speed;
+    else if (right && !left) this.vx = this.speed;
     else this.vx = 0;
 
-    if (up) this.vy = -this.speed;
-    else if (down) this.vy = this.speed;
+    if (up && !down) this.vy = -this.speed;
+    else if (down && !up) this.vy = this.speed;
     else this.vy = 0;
 
-    // Mobile touch overriding
-    if (input.touchTarget) {
-      const dx = input.touchTarget.x - this.x;
-      const dy = input.touchTarget.y - this.y;
-      const dist = Math.hypot(dx, dy);
-      if (dist > 5) {
-        this.vx = (dx / dist) * this.speed;
-        this.vy = (dy / dist) * this.speed;
-      } else {
-        this.vx = 0;
-        this.vy = 0;
-      }
+    // Normalize diagonal movement speed
+    if (this.vx !== 0 && this.vy !== 0) {
+      this.vx *= 0.7071;
+      this.vy *= 0.7071;
     }
 
     this.x += this.vx * dt;
